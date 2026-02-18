@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WebRTC Video App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h2>Real-Time Video Conferencing</h2>
+
+<video id="localVideo" autoplay muted></video>
+<video id="remoteVideo" autoplay></video>
+
+<div>
+  <button onclick="toggleAudio()">Mute/Unmute</button>
+  <button onclick="toggleVideo()">Camera On/Off</button>
+</div>
+
+<div>
+  <input id="chatInput" placeholder="Type message...">
+  <button onclick="sendMessage()">Send</button>
+  <div id="chatBox"></div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

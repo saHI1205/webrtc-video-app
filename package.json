@@ -1,0 +1,13 @@
+{
+  "name": "webrtc-video-app",
+  "version": "1.0.0",
+  "description": "EC9520 WebRTC assignment",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "socket.io": "^4.8.3"
+  }
+}
