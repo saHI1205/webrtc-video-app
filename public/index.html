@@ -1,28 +1,126 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>WebRTC Video App</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Zoom-style WebRTC Meeting</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
+  <!-- Join Screen -->
+  <div id="joinScreen" class="joinScreen">
+    <div class="joinCard">
+      <div class="brandRow">
+        <div class="brandDot"></div>
+        <div class="brandTitle">Meeting</div>
+      </div>
 
-<h2>Real-Time Video Conferencing</h2>
+      <h2>Join a Meeting</h2>
+      <p class="sub">Enter your name and Room ID</p>
 
-<video id="localVideo" autoplay muted></video>
-<video id="remoteVideo" autoplay></video>
+      <div class="joinForm">
+        <input id="nameInput" placeholder="Your name (e.g., Sahithyan)" />
+        <input id="roomInput" placeholder="Room ID (e.g., music-room)" />
+        <button id="joinBtn" class="primaryBtn">
+          <i class="fa-solid fa-right-to-bracket"></i>
+          <span>Join</span>
+        </button>
+      </div>
 
-<div>
-  <button onclick="toggleAudio()">Mute/Unmute</button>
-  <button onclick="toggleVideo()">Camera On/Off</button>
-</div>
+      <div class="tips">
+        <i class="fa-solid fa-circle-info"></i>
+        <span>Tip: Test with Laptop + Mobile on same Wi-Fi.</span>
+      </div>
+    </div>
+  </div>
 
-<div>
-  <input id="chatInput" placeholder="Type message...">
-  <button onclick="sendMessage()">Send</button>
-  <div id="chatBox"></div>
-</div>
+  <!-- Meeting Screen -->
+  <div id="meetingScreen" class="meetingScreen hidden">
+    <!-- Top bar -->
+    <div class="topBar">
+      <div class="left">
+        <span class="pill"><i class="fa-solid fa-circle"></i> Live</span>
+        <span id="roomPill" class="pill outline"></span>
+      </div>
 
-<script src="/socket.io/socket.io.js"></script>
-<script src="script.js"></script>
+      <div class="right">
+        <!-- ✅ Timer added -->
+        <span id="callTimer" class="timer">00:00</span>
+        <span id="statusText" class="status">Connecting…</span>
+      </div>
+    </div>
+
+    <!-- Video Stage -->
+    <div class="stage">
+      <div id="toast" class="toast hidden"></div>
+
+      <div class="grid">
+        <!-- Remote -->
+        <div id="remoteTile" class="tile big">
+          <video id="remoteVideo" autoplay playsinline></video>
+          <div class="nameTag" id="remoteNameTag">Remote</div>
+
+          <div id="remoteOverlay" class="overlay">
+            <div class="spinner"></div>
+            <div class="overlayText">Waiting for participant…</div>
+          </div>
+        </div>
+
+        <!-- Local -->
+        <div id="localTile" class="tile small">
+          <video id="localVideo" autoplay muted playsinline></video>
+          <div class="nameTag" id="localNameTag">You</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat panel -->
+    <div id="chatPanel" class="chatPanel hidden">
+      <div class="chatHeader">
+        <div class="chatTitle">Chat</div>
+        <button id="chatCloseBtn" class="iconBtn ghost" title="Close chat">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div id="chatBox" class="chatBox"></div>
+
+      <div class="chatRow">
+        <input id="chatInput" placeholder="Type a message…" />
+        <button id="sendBtn" class="iconBtn primary" title="Send">
+          <i class="fa-solid fa-paper-plane"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bottom control bar -->
+    <div class="controlBar">
+      <button id="muteBtn" class="ctl" title="Mute/Unmute">
+        <div class="ctlIcon"><i class="fa-solid fa-microphone"></i></div>
+        <div class="ctlLabel">Mute</div>
+      </button>
+
+      <button id="camBtn" class="ctl" title="Start/Stop Video">
+        <div class="ctlIcon"><i class="fa-solid fa-video"></i></div>
+        <div class="ctlLabel">Stop Video</div>
+      </button>
+
+      <button id="chatBtn" class="ctl" title="Chat">
+        <div class="ctlIcon"><i class="fa-regular fa-message"></i></div>
+        <div class="ctlLabel">Chat</div>
+      </button>
+
+      <button id="leaveBtn" class="ctl danger" title="Leave">
+        <div class="ctlIcon"><i class="fa-solid fa-phone-slash"></i></div>
+        <div class="ctlLabel">Leave</div>
+      </button>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
