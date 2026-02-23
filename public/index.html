@@ -32,7 +32,7 @@
 
       <div class="tips">
         <i class="fa-solid fa-circle-info"></i>
-        <span>Tip: Test with Laptop + Mobile on same Wi-Fi.</span>
+        <span>Tip: Test with Laptop + Mobile on same Wi-Fi (or Chrome + Edge).</span>
       </div>
     </div>
   </div>
@@ -47,7 +47,6 @@
       </div>
 
       <div class="right">
-        <!-- ✅ Timer added -->
         <span id="callTimer" class="timer">00:00</span>
         <span id="statusText" class="status">Connecting…</span>
       </div>
@@ -55,21 +54,19 @@
 
     <!-- Video Stage -->
     <div class="stage">
-      <div id="toast" class="toast hidden"></div>
+      <div class="grid" id="videoArea">
+        <div id="toast" class="toast hidden"></div>
 
-      <div class="grid">
-        <!-- Remote -->
-        <div id="remoteTile" class="tile big">
-          <video id="remoteVideo" autoplay playsinline></video>
-          <div class="nameTag" id="remoteNameTag">Remote</div>
+        <!-- ✅ Remote participants go here -->
+        <div id="remoteGrid" class="remoteGrid"></div>
 
-          <div id="remoteOverlay" class="overlay">
-            <div class="spinner"></div>
-            <div class="overlayText">Waiting for participant…</div>
-          </div>
+        <!-- ✅ Overlay when no participants -->
+        <div id="remoteOverlay" class="overlay">
+          <div class="spinner"></div>
+          <div class="overlayText">Waiting for participant…</div>
         </div>
 
-        <!-- Local -->
+        <!-- ✅ Local floating tile -->
         <div id="localTile" class="tile small">
           <video id="localVideo" autoplay muted playsinline></video>
           <div class="nameTag" id="localNameTag">You</div>

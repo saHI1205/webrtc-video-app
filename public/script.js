@@ -1,75 +1,64 @@
 const socket = io();
 
+// DOM
 const joinScreen = document.getElementById("joinScreen");
 const meetingScreen = document.getElementById("meetingScreen");
-
 const nameInput = document.getElementById("nameInput");
 const roomInput = document.getElementById("roomInput");
 const joinBtn = document.getElementById("joinBtn");
 
 const roomPill = document.getElementById("roomPill");
-const statusText = document.getElementById("statusText");
-
-const callTimer = document.getElementById("callTimer"); // ✅ timer
-
+const localTile = document.getElementById("localTile");
 const localVideo = document.getElementById("localVideo");
-const remoteVideo = document.getElementById("remoteVideo");
-
 const localNameTag = document.getElementById("localNameTag");
-const remoteNameTag = document.getElementById("remoteNameTag");
-
+const remoteGrid = document.getElementById("remoteGrid");
 const remoteOverlay = document.getElementById("remoteOverlay");
-const remoteTile = document.getElementById("remoteTile");
+const toast = document.getElementById("toast");
+const statusText = document.getElementById("statusText");
+const callTimer = document.getElementById("callTimer");
 
-const muteBtn = document.getElementById("muteBtn");
-const camBtn = document.getElementById("camBtn");
 const chatBtn = document.getElementById("chatBtn");
-const leaveBtn = document.getElementById("leaveBtn");
-
 const chatPanel = document.getElementById("chatPanel");
 const chatCloseBtn = document.getElementById("chatCloseBtn");
 const chatBox = document.getElementById("chatBox");
 const chatInput = document.getElementById("chatInput");
 const sendBtn = document.getElementById("sendBtn");
 
-const toast = document.getElementById("toast");
+const muteBtn = document.getElementById("muteBtn");
+const camBtn = document.getElementById("camBtn");
+const leaveBtn = document.getElementById("leaveBtn");
 
-let localStream = null;
-let roomId = null;
+// State
 let myName = "You";
+let roomId = "";
+let localStream = null;
 
-let peerConnection = null;
-let remoteSocketId = null;
+const peers = {};        // peerId -> RTCPeerConnection
+const remoteVideos = {}; // peerId -> video element
+const remoteNames = {};  // peerId -> name
 
-// Active speaker detection
-let audioCtx = null;
-let analyser = null;
-let rafId = null;
-
-// ✅ Timer variables
 let timerInterval = null;
 let startTimeMs = null;
 
+// STUN
 const rtcConfig = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
 };
 
+// UI helpers
 function showToast(msg) {
   toast.textContent = msg;
   toast.classList.remove("hidden");
   setTimeout(() => toast.classList.add("hidden"), 1800);
 }
-
 function setStatus(msg) {
   statusText.textContent = msg;
 }
-
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (m) => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;"
   }[m]));
 }
-
 function addChatMsg(name, message) {
   const div = document.createElement("div");
   div.className = "chatMsg";
@@ -78,29 +67,23 @@ function addChatMsg(name, message) {
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-/* ✅ Timer helpers */
+// Timer
 function formatTime(totalSeconds) {
   const h = Math.floor(totalSeconds / 3600);
   const m = Math.floor((totalSeconds % 3600) / 60);
   const s = totalSeconds % 60;
-
-  if (h > 0) {
-    return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
-  }
-  return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+  if (h > 0) return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
-
 function startTimer() {
-  stopTimer();
+  if (timerInterval) return;
   startTimeMs = Date.now();
   callTimer.textContent = "00:00";
-
   timerInterval = setInterval(() => {
     const elapsed = Math.floor((Date.now() - startTimeMs) / 1000);
     callTimer.textContent = formatTime(elapsed);
   }, 1000);
 }
-
 function stopTimer() {
   if (timerInterval) clearInterval(timerInterval);
   timerInterval = null;
@@ -108,82 +91,91 @@ function stopTimer() {
   callTimer.textContent = "00:00";
 }
 
+// Media
 async function startMedia() {
   localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
   localVideo.srcObject = localStream;
   try { await localVideo.play(); } catch (_) {}
 }
 
-function createPeer(toSocketId) {
+// Remote tiles
+function createRemoteTile(peerId, name = "Remote") {
+  if (remoteVideos[peerId]) return remoteVideos[peerId];
+
+  const tile = document.createElement("div");
+  tile.className = "remoteTile";
+  tile.id = `remoteTile-${peerId}`;
+
+  const video = document.createElement("video");
+  video.autoplay = true;
+  video.playsInline = true;
+
+  const tag = document.createElement("div");
+  tag.className = "nameTag";
+  tag.textContent = name;
+
+  tile.appendChild(video);
+  tile.appendChild(tag);
+  remoteGrid.appendChild(tile);
+
+  remoteVideos[peerId] = video;
+  return video;
+}
+function removeRemoteTile(peerId) {
+  const tile = document.getElementById(`remoteTile-${peerId}`);
+  if (tile) tile.remove();
+  delete remoteVideos[peerId];
+  delete remoteNames[peerId];
+}
+
+// Peer
+function createPeer(peerId) {
   const pc = new RTCPeerConnection(rtcConfig);
 
   pc.onicecandidate = (event) => {
     if (event.candidate) {
-      socket.emit("webrtc-ice-candidate", { roomId, candidate: event.candidate, to: toSocketId });
+      socket.emit("webrtc-ice-candidate", { roomId, to: peerId, candidate: event.candidate });
     }
   };
 
   pc.ontrack = (event) => {
-    remoteVideo.srcObject = event.streams[0];
-    remoteVideo.play().catch(() => {});
+    const name = remoteNames[peerId] || "Remote";
+    const vid = createRemoteTile(peerId, name);
+    vid.srcObject = event.streams[0];
+    vid.play().catch(() => {});
     remoteOverlay.classList.add("hidden");
     setStatus("Connected");
-    showToast("Participant connected");
-
-    startRemoteSpeakerGlow(event.streams[0]);
-
-    // ✅ Start timer when remote connects
     startTimer();
   };
 
-  localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+  // Add local tracks
+  localStream.getTracks().forEach((t) => pc.addTrack(t, localStream));
+
+  peers[peerId] = pc;
   return pc;
 }
 
-async function makeOffer(toSocketId) {
-  peerConnection = createPeer(toSocketId);
-  const offer = await peerConnection.createOffer();
-  await peerConnection.setLocalDescription(offer);
-  socket.emit("webrtc-offer", { roomId, offer, to: toSocketId });
+async function makeOffer(peerId) {
+  // avoid re-offer
+  if (peers[peerId]) return;
+
+  const pc = createPeer(peerId);
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  socket.emit("webrtc-offer", { roomId, to: peerId, offer });
 }
 
-async function handleOffer({ offer, from }) {
-  remoteSocketId = from;
-  peerConnection = createPeer(from);
-
-  await peerConnection.setRemoteDescription(offer);
-  const answer = await peerConnection.createAnswer();
-  await peerConnection.setLocalDescription(answer);
-
-  socket.emit("webrtc-answer", { roomId, answer, to: from });
-}
-
-async function handleAnswer({ answer }) {
-  if (!peerConnection) return;
-  await peerConnection.setRemoteDescription(answer);
-}
-
-async function handleIce({ candidate }) {
-  if (!peerConnection) return;
-  try { await peerConnection.addIceCandidate(candidate); }
-  catch (e) { console.log("ICE add error:", e); }
-}
-
-function cleanupCall() {
-  if (peerConnection) {
-    peerConnection.close();
-    peerConnection = null;
+// Cleanup
+function cleanupAllPeers() {
+  for (const id of Object.keys(peers)) {
+    try { peers[id].close(); } catch (_) {}
+    delete peers[id];
+    removeRemoteTile(id);
   }
-  remoteSocketId = null;
-  remoteVideo.srcObject = null;
   remoteOverlay.classList.remove("hidden");
-  remoteTile.classList.remove("activeSpeaker");
-  stopRemoteSpeakerGlow();
-
-  // ✅ Stop timer when call ends
+  setStatus("Waiting for participant…");
   stopTimer();
 }
-
 function cleanupMedia() {
   if (localStream) {
     localStream.getTracks().forEach(t => t.stop());
@@ -191,50 +183,10 @@ function cleanupMedia() {
   }
   localVideo.srcObject = null;
 }
-
 function openChat() { chatPanel.classList.remove("hidden"); }
 function closeChat() { chatPanel.classList.add("hidden"); }
 
-/* Active speaker glow */
-function startRemoteSpeakerGlow(remoteStream) {
-  stopRemoteSpeakerGlow();
-
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const source = audioCtx.createMediaStreamSource(remoteStream);
-  analyser = audioCtx.createAnalyser();
-  analyser.fftSize = 512;
-  source.connect(analyser);
-
-  const data = new Uint8Array(analyser.frequencyBinCount);
-
-  const tick = () => {
-    analyser.getByteTimeDomainData(data);
-
-    let sum = 0;
-    for (let i = 0; i < data.length; i++) sum += Math.abs(data[i] - 128);
-    const avg = sum / data.length;
-
-    if (avg > 6) remoteTile.classList.add("activeSpeaker");
-    else remoteTile.classList.remove("activeSpeaker");
-
-    rafId = requestAnimationFrame(tick);
-  };
-
-  tick();
-}
-
-function stopRemoteSpeakerGlow() {
-  if (rafId) cancelAnimationFrame(rafId);
-  rafId = null;
-
-  if (audioCtx) {
-    audioCtx.close().catch(()=>{});
-    audioCtx = null;
-  }
-  analyser = null;
-}
-
-/* Join flow */
+// Join
 joinBtn.addEventListener("click", async () => {
   myName = nameInput.value.trim() || "You";
   roomId = roomInput.value.trim() || "music-room";
@@ -250,7 +202,7 @@ joinBtn.addEventListener("click", async () => {
 
   try {
     await startMedia();
-    socket.emit("join-room", { roomId });
+    socket.emit("join-room", { roomId, name: myName });
     setStatus("Waiting for participant…");
   } catch (e) {
     showToast("Camera/Mic permission blocked!");
@@ -259,38 +211,69 @@ joinBtn.addEventListener("click", async () => {
   }
 });
 
-/* Socket events */
-socket.on("user-joined", async ({ socketId }) => {
-  if (remoteSocketId) return;
-  remoteSocketId = socketId;
-  setStatus("Connecting…");
-  showToast("Participant joined — connecting…");
-  await makeOffer(socketId);
-});
+// Socket events
 
-socket.on("webrtc-offer", async (data) => {
-  setStatus("Connecting…");
-  showToast("Incoming connection…");
-  await handleOffer(data);
-});
-
-socket.on("webrtc-answer", async (data) => {
-  await handleAnswer(data);
-});
-
-socket.on("webrtc-ice-candidate", async (data) => {
-  await handleIce(data);
-});
-
-socket.on("user-left", ({ socketId }) => {
-  if (socketId === remoteSocketId) {
-    showToast("Participant left");
-    setStatus("Waiting for participant…");
-    cleanupCall();
+// ✅ IMPORTANT FIX: New joiner should NOT send offers to all existing users.
+// They should just save names and WAIT for offers from existing users.
+socket.on("room-users", ({ users }) => {
+  for (const u of users) {
+    remoteNames[u.socketId] = u.name || "Remote";
   }
 });
 
-/* Chat */
+// Existing users make offer to the new user
+socket.on("user-joined", async ({ socketId, name }) => {
+  remoteNames[socketId] = name || "Remote";
+  showToast(`${remoteNames[socketId]} joined`);
+  await makeOffer(socketId);
+});
+
+// Incoming offer -> answer
+socket.on("webrtc-offer", async ({ offer, from, name }) => {
+  remoteNames[from] = name || "Remote";
+  const pc = peers[from] || createPeer(from);
+
+  await pc.setRemoteDescription(offer);
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+
+  socket.emit("webrtc-answer", { roomId, to: from, answer });
+});
+
+// Incoming answer
+socket.on("webrtc-answer", async ({ answer, from }) => {
+  const pc = peers[from];
+  if (!pc) return;
+  await pc.setRemoteDescription(answer);
+});
+
+// ICE
+socket.on("webrtc-ice-candidate", async ({ candidate, from }) => {
+  const pc = peers[from];
+  if (!pc) return;
+  try { await pc.addIceCandidate(candidate); }
+  catch (e) { console.log("ICE add error:", e); }
+});
+
+// User left
+socket.on("user-left", ({ socketId }) => {
+  const name = remoteNames[socketId] || "Participant";
+  showToast(`${name} left`);
+
+  if (peers[socketId]) {
+    try { peers[socketId].close(); } catch (_) {}
+    delete peers[socketId];
+  }
+  removeRemoteTile(socketId);
+
+  if (Object.keys(peers).length === 0) {
+    remoteOverlay.classList.remove("hidden");
+    setStatus("Waiting for participant…");
+    stopTimer();
+  }
+});
+
+// Chat
 chatBtn.addEventListener("click", () => {
   if (chatPanel.classList.contains("hidden")) openChat();
   else closeChat();
@@ -304,21 +287,16 @@ sendBtn.addEventListener("click", () => {
   socket.emit("chat-message", { roomId, name: myName, message: msg });
   chatInput.value = "";
 });
+socket.on("chat-message", ({ name, message }) => addChatMsg(name, message));
 
-socket.on("chat-message", ({ name, message }) => {
-  addChatMsg(name, message);
-});
-
-/* Mute / Video toggle */
+// Mute / cam
 muteBtn.addEventListener("click", () => {
   if (!localStream) return;
   const a = localStream.getAudioTracks()[0];
   a.enabled = !a.enabled;
-
   muteBtn.querySelector(".ctlIcon").innerHTML = a.enabled
     ? '<i class="fa-solid fa-microphone"></i>'
     : '<i class="fa-solid fa-microphone-slash"></i>';
-
   muteBtn.querySelector(".ctlLabel").textContent = a.enabled ? "Mute" : "Unmute";
   showToast(a.enabled ? "Unmuted" : "Muted");
 });
@@ -327,22 +305,20 @@ camBtn.addEventListener("click", () => {
   if (!localStream) return;
   const v = localStream.getVideoTracks()[0];
   v.enabled = !v.enabled;
-
   camBtn.querySelector(".ctlIcon").innerHTML = v.enabled
     ? '<i class="fa-solid fa-video"></i>'
     : '<i class="fa-solid fa-video-slash"></i>';
-
   camBtn.querySelector(".ctlLabel").textContent = v.enabled ? "Stop Video" : "Start Video";
   showToast(v.enabled ? "Video started" : "Video stopped");
 });
 
-/* Leave */
+// ✅ Proper leave
 leaveBtn.addEventListener("click", () => {
-  showToast("You left the meeting");
-  cleanupCall();
-  cleanupMedia();
-  stopTimer(); // ✅ ensure timer reset
+  socket.emit("leave-room"); // tell server + other users
 
+  showToast("You left the meeting");
+  cleanupAllPeers();
+  cleanupMedia();
   meetingScreen.classList.add("hidden");
   joinScreen.classList.remove("hidden");
   closeChat();
