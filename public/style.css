@@ -557,3 +557,160 @@ html, body{
   background:#ef4444;
   color:#fff;
 }
+/* =====================================
+   RESPONSIVE DESIGN FOR LAPTOP + MOBILE
+   ===================================== */
+
+/* Tablets */
+@media (max-width: 1024px){
+
+  .joinLogo{
+    font-size:64px;
+  }
+
+  .joinTerminalLine{
+    font-size:18px;
+  }
+
+  .joinHeading{
+    font-size:28px;
+  }
+
+  .remoteGrid{
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .tile.small{
+    width:200px;
+    height:140px;
+  }
+
+}
+
+/* Mobile Phones */
+@media (max-width: 768px){
+
+  .joinScreen{
+    padding:20px;
+  }
+
+  .joinLogo{
+    font-size:48px;
+  }
+
+  .joinTerminalLine{
+    font-size:15px;
+    line-height:1.6;
+  }
+
+  .joinHeading{
+    font-size:22px;
+  }
+
+  .joinSub{
+    font-size:14px;
+  }
+
+  .joinForm input{
+    font-size:15px;
+    padding:12px;
+  }
+
+  .primaryBtn{
+    font-size:15px;
+    padding:12px;
+  }
+
+  .tips{
+    font-size:13px;
+  }
+
+  /* Meeting screen */
+
+  .topBar{
+    padding:12px;
+    flex-direction:column;
+    gap:8px;
+  }
+
+  .timer{
+    font-size:13px;
+  }
+
+  .status{
+    font-size:13px;
+  }
+
+  .stage{
+    padding:10px;
+  }
+
+  .remoteGrid{
+    grid-template-columns: 1fr;
+    gap:12px;
+  }
+
+  .remoteTile{
+    height:240px;
+  }
+
+  /* Local video */
+
+  .tile.small{
+    width:140px;
+    height:100px;
+    right:10px;
+    bottom:10px;
+  }
+
+  /* Control buttons */
+
+  .controlBar{
+    gap:8px;
+    padding:10px;
+  }
+
+  .ctl{
+    width:70px;
+    padding:8px;
+  }
+
+  .ctlIcon{
+    font-size:16px;
+  }
+
+  .ctlLabel{
+    font-size:11px;
+  }
+
+}
+
+/* Small Phones */
+@media (max-width: 480px){
+
+  .joinLogo{
+    font-size:36px;
+  }
+
+  .joinTerminalLine{
+    font-size:14px;
+  }
+
+  .remoteTile{
+    height:200px;
+  }
+
+  .tile.small{
+    width:120px;
+    height:90px;
+  }
+
+  .controlBar{
+    gap:6px;
+  }
+
+  .ctl{
+    width:60px;
+  }
+
+}
