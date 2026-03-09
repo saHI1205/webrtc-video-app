@@ -10,36 +10,45 @@
 </head>
 
 <body>
-  <!-- Join Screen -->
-  <div id="joinScreen" class="joinScreen">
-    <div class="joinCard">
-      <div class="brandRow">
-        <div class="brandDot"></div>
-        <div class="brandTitle">Meeting</div>
-      </div>
+  <!-- Terminal Boot Screen -->
+  <div id="splashScreen" class="terminalBoot">
+    <div class="terminalBox">
+      <div class="bootLogo">SNS Connect</div>
 
-      <h2>Join a Meeting</h2>
-      <p class="sub">Enter your name and Room ID</p>
+      <div class="bootLine">Initializing meeting environment...</div>
+      <div class="bootLine">Loading secure connection modules...</div>
+      <div class="bootLine">Creator: <span class="bootHighlight">Sahithyan [164] Naveenkumar [035] Soorjayan [165]</span></div>
+      <div class="bootLine">System check: <span class="bootOk">OK</span></div>
+      <div class="bootLine">Camera/Microphone services: <span class="bootOk">READY</span></div>
+      <div class="bootLine">Starting application<span id="bootDots"></span></div>
 
-      <div class="joinForm">
-        <input id="nameInput" placeholder="Your name (e.g., Sahithyan)" />
-        <input id="roomInput" placeholder="Room ID (e.g., music-room)" />
-        <button id="joinBtn" class="primaryBtn">
-          <i class="fa-solid fa-right-to-bracket"></i>
-          <span>Join</span>
-        </button>
-      </div>
-
-      <div class="tips">
-        <i class="fa-solid fa-circle-info"></i>
-        <span>Tip: Test with Laptop + Mobile on same Wi-Fi (or Chrome + Edge).</span>
+      <div class="bootProgressWrap">
+        <div class="bootProgressBar"></div>
       </div>
     </div>
   </div>
 
+  <!-- Join Screen -->
+<div id="joinScreen" class="joinScreen hidden">
+  <div class="joinTerminalBox">
+    <div class="joinLogo">SNS CONNECT</div>
+
+    <h2 class="joinHeading">Join a Meeting</h2>
+    <p class="joinSub">Enter your name and Room ID</p>
+
+    <div class="joinForm">
+      <input id="nameInput" placeholder="Username (e.g., Sahithyan)" />
+      <input id="roomInput" placeholder="Room ID (e.g., music-room)" />
+      <button id="joinBtn" class="primaryBtn">
+        <i class="fa-solid fa-right-to-bracket"></i>
+        <span>CONNECT </span>
+      </button>
+    </div>
+  </div>
+</div>
+
   <!-- Meeting Screen -->
   <div id="meetingScreen" class="meetingScreen hidden">
-    <!-- Top bar -->
     <div class="topBar">
       <div class="left">
         <span class="pill"><i class="fa-solid fa-circle"></i> Live</span>
@@ -52,21 +61,17 @@
       </div>
     </div>
 
-    <!-- Video Stage -->
     <div class="stage">
       <div class="grid" id="videoArea">
         <div id="toast" class="toast hidden"></div>
 
-        <!-- ✅ Remote participants go here -->
         <div id="remoteGrid" class="remoteGrid"></div>
 
-        <!-- ✅ Overlay when no participants -->
         <div id="remoteOverlay" class="overlay">
           <div class="spinner"></div>
           <div class="overlayText">Waiting for participant…</div>
         </div>
 
-        <!-- ✅ Local floating tile -->
         <div id="localTile" class="tile small">
           <video id="localVideo" autoplay muted playsinline></video>
           <div class="nameTag" id="localNameTag">You</div>
@@ -74,7 +79,6 @@
       </div>
     </div>
 
-    <!-- Chat panel -->
     <div id="chatPanel" class="chatPanel hidden">
       <div class="chatHeader">
         <div class="chatTitle">Chat</div>
@@ -93,7 +97,6 @@
       </div>
     </div>
 
-    <!-- Bottom control bar -->
     <div class="controlBar">
       <button id="muteBtn" class="ctl" title="Mute/Unmute">
         <div class="ctlIcon"><i class="fa-solid fa-microphone"></i></div>
