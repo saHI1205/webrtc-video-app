@@ -1,6 +1,7 @@
 const socket = io();
 
 // DOM
+const splashScreen = document.getElementById("splashScreen");
 const joinScreen = document.getElementById("joinScreen");
 const meetingScreen = document.getElementById("meetingScreen");
 const nameInput = document.getElementById("nameInput");
@@ -27,6 +28,24 @@ const muteBtn = document.getElementById("muteBtn");
 const camBtn = document.getElementById("camBtn");
 const leaveBtn = document.getElementById("leaveBtn");
 
+const bootDots = document.getElementById("bootDots");
+
+// Terminal boot screen
+document.addEventListener("DOMContentLoaded", () => {
+  let dotCount = 0;
+
+  const dotsInterval = setInterval(() => {
+    dotCount = (dotCount + 1) % 4;
+    bootDots.textContent = ".".repeat(dotCount);
+  }, 400);
+
+  setTimeout(() => {
+    clearInterval(dotsInterval);
+    splashScreen.style.display = "none";
+    joinScreen.classList.remove("hidden");
+  }, 2500);
+});
+
 // State
 let myName = "You";
 let roomId = "";
@@ -40,19 +59,9 @@ const pendingCandidates = {};
 let timerInterval = null;
 let startTimeMs = null;
 
-// IMPORTANT:
-// STUN only is not enough for many real-world connections.
-// Replace TURN credentials with your real TURN server.
 const rtcConfig = {
   iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-
-    // Example TURN config — replace with real values
-    // {
-    //   urls: "turn:YOUR_TURN_SERVER:3478",
-    //   username: "YOUR_USERNAME",
-    //   credential: "YOUR_PASSWORD"
-    // }
+    { urls: "stun:stun.l.google.com:19302" }
   ]
 };
 
@@ -135,7 +144,7 @@ async function startMedia() {
   }
 }
 
-// Remote tile helpers
+// Remote tiles
 function createRemoteTile(peerId, name = "Remote") {
   if (remoteVideos[peerId]) return remoteVideos[peerId];
 
@@ -182,7 +191,7 @@ async function flushPendingCandidates(peerId, pc) {
   delete pendingCandidates[peerId];
 }
 
-// Peer handling
+// Peer
 function createPeer(peerId) {
   if (peers[peerId]) return peers[peerId];
 
@@ -222,6 +231,7 @@ function createPeer(peerId) {
         } catch (_) {}
         delete peers[peerId];
       }
+
       removeRemoteTile(peerId);
 
       if (Object.keys(peers).length === 0) {
@@ -491,7 +501,6 @@ leaveBtn.addEventListener("click", () => {
   roomId = "";
 });
 
-// Refresh / close
 window.addEventListener("beforeunload", () => {
   socket.emit("leave-room");
 });
