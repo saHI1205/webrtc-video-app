@@ -26,6 +26,7 @@ const sendBtn = document.getElementById("sendBtn");
 
 const muteBtn = document.getElementById("muteBtn");
 const camBtn = document.getElementById("camBtn");
+const switchCamBtn = document.getElementById("switchCamBtn");
 const leaveBtn = document.getElementById("leaveBtn");
 
 const bootDots = document.getElementById("bootDots");
@@ -50,6 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
 let myName = "You";
 let roomId = "";
 let localStream = null;
+let currentFacingMode = "user";
 
 const peers = {};
 const remoteVideos = {};
@@ -97,6 +99,25 @@ function addChatMsg(name, message) {
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
+// Dynamic layout updater
+function updateVideoLayout() {
+  const count = remoteGrid.children.length;
+
+  remoteGrid.classList.remove("layout-1", "layout-2", "layout-3", "layout-4", "layout-many");
+
+  if (count <= 1) {
+    remoteGrid.classList.add("layout-1");
+  } else if (count === 2) {
+    remoteGrid.classList.add("layout-2");
+  } else if (count === 3) {
+    remoteGrid.classList.add("layout-3");
+  } else if (count === 4) {
+    remoteGrid.classList.add("layout-4");
+  } else {
+    remoteGrid.classList.add("layout-many");
+  }
+}
+
 // Timer
 function formatTime(totalSeconds) {
   const h = Math.floor(totalSeconds / 3600);
@@ -131,7 +152,7 @@ function stopTimer() {
 // Media
 async function startMedia() {
   localStream = await navigator.mediaDevices.getUserMedia({
-    video: true,
+    video: { facingMode: currentFacingMode },
     audio: true
   });
 
@@ -142,6 +163,32 @@ async function startMedia() {
   } catch (e) {
     console.log("Local video autoplay warning:", e);
   }
+}
+
+async function replaceVideoTrackForAllPeers(newVideoTrack) {
+  const tasks = Object.values(peers).map(async (pc) => {
+    const sender = pc.getSenders().find((s) => s.track && s.track.kind === "video");
+    if (sender) {
+      try {
+        await sender.replaceTrack(newVideoTrack);
+      } catch (e) {
+        console.log("replaceTrack error:", e);
+      }
+    }
+  });
+
+  await Promise.all(tasks);
+}
+
+function updateCamButtonLabel() {
+  const videoTrack = localStream?.getVideoTracks?.()[0];
+  const enabled = !!videoTrack?.enabled;
+
+  camBtn.querySelector(".ctlIcon").innerHTML = enabled
+    ? '<i class="fa-solid fa-video"></i>'
+    : '<i class="fa-solid fa-video-slash"></i>';
+
+  camBtn.querySelector(".ctlLabel").textContent = enabled ? "Stop Video" : "Start Video";
 }
 
 // Remote tiles
@@ -165,6 +212,8 @@ function createRemoteTile(peerId, name = "Remote") {
   remoteGrid.appendChild(tile);
 
   remoteVideos[peerId] = video;
+  updateVideoLayout();
+
   return video;
 }
 
@@ -175,6 +224,8 @@ function removeRemoteTile(peerId) {
   delete remoteVideos[peerId];
   delete remoteNames[peerId];
   delete pendingCandidates[peerId];
+
+  updateVideoLayout();
 }
 
 async function flushPendingCandidates(peerId, pc) {
@@ -284,6 +335,7 @@ function cleanupAllPeers() {
   remoteOverlay.classList.remove("hidden");
   setStatus("Waiting for participant…");
   stopTimer();
+  updateVideoLayout();
 }
 
 function cleanupMedia() {
@@ -320,6 +372,8 @@ joinBtn.addEventListener("click", async () => {
     await startMedia();
     socket.emit("join-room", { roomId, name: myName });
     setStatus("Waiting for participant…");
+    updateVideoLayout();
+    updateCamButtonLabel();
   } catch (e) {
     console.log(e);
     showToast("Camera/Mic permission blocked!");
@@ -328,6 +382,14 @@ joinBtn.addEventListener("click", async () => {
     meetingScreen.classList.add("hidden");
     joinScreen.classList.remove("hidden");
   }
+});
+
+nameInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") joinBtn.click();
+});
+
+roomInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") joinBtn.click();
 });
 
 // Socket events
@@ -469,7 +531,7 @@ muteBtn.addEventListener("click", () => {
   showToast(a.enabled ? "Unmuted" : "Muted");
 });
 
-// Camera
+// Camera on/off
 camBtn.addEventListener("click", () => {
   if (!localStream) return;
 
@@ -477,13 +539,69 @@ camBtn.addEventListener("click", () => {
   if (!v) return;
 
   v.enabled = !v.enabled;
+  updateCamButtonLabel();
 
-  camBtn.querySelector(".ctlIcon").innerHTML = v.enabled
-    ? '<i class="fa-solid fa-video"></i>'
-    : '<i class="fa-solid fa-video-slash"></i>';
-
-  camBtn.querySelector(".ctlLabel").textContent = v.enabled ? "Stop Video" : "Start Video";
   showToast(v.enabled ? "Video started" : "Video stopped");
+});
+
+// Switch camera
+switchCamBtn.addEventListener("click", async () => {
+  if (!localStream) {
+    showToast("Camera not started");
+    return;
+  }
+
+  const oldVideoTrack = localStream.getVideoTracks()[0];
+  const audioTrack = localStream.getAudioTracks()[0];
+
+  if (!oldVideoTrack) {
+    showToast("No video track found");
+    return;
+  }
+
+  try {
+    const nextFacingMode = currentFacingMode === "user" ? "environment" : "user";
+
+    const newVideoStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: nextFacingMode },
+      audio: false
+    });
+
+    const newVideoTrack = newVideoStream.getVideoTracks()[0];
+    if (!newVideoTrack) {
+      showToast("Unable to switch camera");
+      return;
+    }
+
+    const wasVideoEnabled = oldVideoTrack.enabled;
+    newVideoTrack.enabled = wasVideoEnabled;
+
+    await replaceVideoTrackForAllPeers(newVideoTrack);
+
+    if (oldVideoTrack) {
+      oldVideoTrack.stop();
+    }
+
+    localStream = new MediaStream([
+      ...(audioTrack ? [audioTrack] : []),
+      newVideoTrack
+    ]);
+
+    localVideo.srcObject = localStream;
+
+    try {
+      await localVideo.play();
+    } catch (e) {
+      console.log("Local video replay warning:", e);
+    }
+
+    currentFacingMode = nextFacingMode;
+    updateCamButtonLabel();
+    showToast(currentFacingMode === "user" ? "Front camera" : "Back camera");
+  } catch (e) {
+    console.log("Switch camera error:", e);
+    showToast("Camera switch not supported");
+  }
 });
 
 // Leave
@@ -499,6 +617,7 @@ leaveBtn.addEventListener("click", () => {
   closeChat();
 
   roomId = "";
+  currentFacingMode = "user";
 });
 
 window.addEventListener("beforeunload", () => {
