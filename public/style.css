@@ -39,7 +39,7 @@ html, body{
   padding:28px;
   z-index:9999;
   overflow:hidden;
-  font-family: "Courier New", monospace;
+  font-family:"Courier New", monospace;
 }
 
 .terminalBox{
@@ -55,7 +55,7 @@ html, body{
   color:#5865ff;
   margin-bottom:22px;
   text-transform:uppercase;
-  text-shadow: 0 0 10px rgba(88,101,255,0.25);
+  text-shadow:0 0 10px rgba(88,101,255,0.25);
 }
 
 .bootLine{
@@ -88,7 +88,7 @@ html, body{
   width:0%;
   height:100%;
   background:#5865ff;
-  animation: terminalProgress 2.5s linear forwards;
+  animation:terminalProgress 2.5s linear forwards;
 }
 
 @keyframes terminalProgress{
@@ -97,7 +97,7 @@ html, body{
 }
 
 /* =========================
-   JOIN SCREEN - TERMINAL THEME
+   JOIN SCREEN
    ========================= */
 .joinScreen{
   min-height:100vh;
@@ -232,41 +232,9 @@ html, body{
   margin-top:2px;
 }
 
-@media(max-width:680px){
-  .joinScreen{
-    padding:18px;
-  }
-
-  .joinLogo{
-    font-size:56px;
-  }
-
-  .joinTerminalLine{
-    font-size:16px;
-  }
-
-  .joinHeading{
-    font-size:26px;
-  }
-
-  .joinSub{
-    font-size:15px;
-  }
-
-  .joinForm input,
-  .primaryBtn{
-    font-size:16px;
-  }
-
-  .tips{
-    font-size:13px;
-  }
-}
-
 /* =========================
-   MEETING SCREEN - TERMINAL THEME
+   MEETING SCREEN
    ========================= */
-
 .meetingScreen{
   min-height:100vh;
   display:flex;
@@ -276,8 +244,6 @@ html, body{
   font-family:"Courier New", monospace;
 }
 
-/* TOP BAR */
-
 .topBar{
   display:flex;
   justify-content:space-between;
@@ -285,6 +251,14 @@ html, body{
   padding:16px 22px;
   background:#050505;
   border-bottom:1px solid #1f2937;
+}
+
+.topBar .left,
+.topBar .right{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
 }
 
 .pill{
@@ -310,8 +284,6 @@ html, body{
   color:#e5e7eb;
 }
 
-/* STATUS + TIMER */
-
 .status{
   color:#9ca3af;
   font-size:14px;
@@ -322,26 +294,30 @@ html, body{
   color:#7dd3fc;
   border:1px solid #374151;
   padding:6px 12px;
-  margin-right:10px;
   background:#000;
   border-radius:0;
 }
 
-/* VIDEO STAGE */
+.meetingBody{
+  flex:1;
+  display:flex;
+  min-height:0;
+}
 
 .stage{
   flex:1;
   padding:20px;
   display:flex;
   justify-content:center;
+  min-height:0;
 }
 
 .grid{
-  width:min(1200px, 100%);
+  width:min(1400px, 100%);
+  height:100%;
+  min-height:calc(100vh - 170px);
   position:relative;
 }
-
-/* LOCAL VIDEO */
 
 .tile{
   position:relative;
@@ -365,23 +341,22 @@ html, body{
   height:160px;
   border:1px solid #5865ff;
   box-shadow:0 0 8px rgba(88,101,255,0.4);
+  z-index:20;
+  border-radius:8px;
 }
-
-/* USER NAME TAG */
 
 .nameTag{
   position:absolute;
   left:10px;
   bottom:10px;
   padding:6px 10px;
-  background:#000;
+  background:rgba(0,0,0,0.72);
   border:1px solid #374151;
   font-size:13px;
   color:#e5e7eb;
   font-family:"Courier New", monospace;
+  z-index:5;
 }
-
-/* WAITING SCREEN */
 
 .overlay{
   position:absolute;
@@ -393,6 +368,7 @@ html, body{
   gap:14px;
   background:#000;
   color:#e5e7eb;
+  z-index:15;
 }
 
 .spinner{
@@ -413,31 +389,70 @@ html, body{
   color:#9ca3af;
 }
 
-/* REMOTE VIDEO GRID */
-
+/* =========================
+   REMOTE VIDEO GRID
+   ========================= */
 .remoteGrid{
   display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap:16px;
   width:100%;
-  min-height:70vh;
+  height:100%;
+  min-height:calc(100vh - 170px);
+  gap:16px;
+  grid-auto-rows:minmax(0, 1fr);
 }
 
 .remoteTile{
-  height:320px;
+  position:relative;
   background:#000;
   border:1px solid #374151;
-  position:relative;
+  overflow:hidden;
+  border-radius:8px;
+  min-height:0;
 }
 
 .remoteTile video{
   width:100%;
   height:100%;
   object-fit:cover;
+  display:block;
 }
 
-/* CHAT PANEL */
+/* 1 participant */
+.remoteGrid.layout-1{
+  grid-template-columns:1fr;
+  grid-template-rows:1fr;
+}
 
+/* 2 participants => exact split screen */
+.remoteGrid.layout-2{
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:1fr;
+}
+
+/* 3 participants */
+.remoteGrid.layout-3{
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:1fr 1fr;
+}
+
+.remoteGrid.layout-3 .remoteTile:first-child{
+  grid-column:1 / span 2;
+}
+
+/* 4 participants */
+.remoteGrid.layout-4{
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:1fr 1fr;
+}
+
+/* 5+ participants */
+.remoteGrid.layout-many{
+  grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
+}
+
+/* =========================
+   CHAT PANEL
+   ========================= */
 .chatPanel{
   position:fixed;
   top:0;
@@ -455,6 +470,9 @@ html, body{
 .chatHeader{
   padding:16px;
   border-bottom:1px solid #1f2937;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
 }
 
 .chatTitle{
@@ -478,14 +496,13 @@ html, body{
 .chatMsg .who{
   font-size:13px;
   color:#7dd3fc;
+  margin-bottom:4px;
 }
 
 .chatMsg .text{
   font-size:14px;
   color:#e5e7eb;
 }
-
-/* CHAT INPUT */
 
 .chatRow{
   padding:12px;
@@ -501,15 +518,60 @@ html, body{
   border:1px solid #374151;
   color:#e5e7eb;
   font-family:"Courier New", monospace;
+  outline:none;
+}
+
+.chatRow input:focus{
+  border-color:#5865ff;
+}
+
+.iconBtn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:42px;
+  height:42px;
+  border:1px solid #374151;
+  background:#000;
+  color:#e5e7eb;
+  cursor:pointer;
+}
+
+.iconBtn.ghost:hover{
+  border-color:#5865ff;
+  color:#5865ff;
 }
 
 .iconBtn.primary{
   background:#5865ff;
   border:1px solid #5865ff;
+  color:#fff;
 }
 
-/* CONTROL BAR */
+.iconBtn.primary:hover{
+  background:#4752e6;
+  border-color:#4752e6;
+}
 
+/* =========================
+   TOAST
+   ========================= */
+.toast{
+  position:absolute;
+  top:16px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#050505;
+  color:#e5e7eb;
+  border:1px solid #374151;
+  padding:10px 14px;
+  z-index:30;
+  font-size:14px;
+}
+
+/* =========================
+   CONTROL BAR
+   ========================= */
 .controlBar{
   position:sticky;
   bottom:0;
@@ -519,6 +581,7 @@ html, body{
   display:flex;
   justify-content:center;
   gap:14px;
+  flex-wrap:wrap;
 }
 
 .ctl{
@@ -533,6 +596,7 @@ html, body{
   align-items:center;
   gap:6px;
   font-family:"Courier New", monospace;
+  transition:.2s ease;
 }
 
 .ctl:hover{
@@ -557,13 +621,11 @@ html, body{
   background:#ef4444;
   color:#fff;
 }
-/* =====================================
-   RESPONSIVE DESIGN FOR LAPTOP + MOBILE
-   ===================================== */
 
-/* Tablets */
-@media (max-width: 1024px){
-
+/* =========================
+   RESPONSIVE
+   ========================= */
+@media (max-width:1024px){
   .joinLogo{
     font-size:64px;
   }
@@ -576,20 +638,13 @@ html, body{
     font-size:28px;
   }
 
-  .remoteGrid{
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  }
-
   .tile.small{
     width:200px;
     height:140px;
   }
-
 }
 
-/* Mobile Phones */
-@media (max-width: 768px){
-
+@media (max-width:768px){
   .joinScreen{
     padding:20px;
   }
@@ -625,36 +680,38 @@ html, body{
     font-size:13px;
   }
 
-  /* Meeting screen */
-
   .topBar{
     padding:12px;
     flex-direction:column;
     gap:8px;
-  }
-
-  .timer{
-    font-size:13px;
-  }
-
-  .status{
-    font-size:13px;
+    align-items:flex-start;
   }
 
   .stage{
     padding:10px;
   }
 
+  .grid,
   .remoteGrid{
-    grid-template-columns: 1fr;
-    gap:12px;
+    min-height:calc(100vh - 210px);
+  }
+
+  .remoteGrid.layout-1,
+  .remoteGrid.layout-2,
+  .remoteGrid.layout-3,
+  .remoteGrid.layout-4,
+  .remoteGrid.layout-many{
+    grid-template-columns:1fr;
+    grid-template-rows:auto;
+  }
+
+  .remoteGrid.layout-3 .remoteTile:first-child{
+    grid-column:auto;
   }
 
   .remoteTile{
-    height:240px;
+    min-height:220px;
   }
-
-  /* Local video */
 
   .tile.small{
     width:140px;
@@ -662,8 +719,6 @@ html, body{
     right:10px;
     bottom:10px;
   }
-
-  /* Control buttons */
 
   .controlBar{
     gap:8px;
@@ -682,12 +737,9 @@ html, body{
   .ctlLabel{
     font-size:11px;
   }
-
 }
 
-/* Small Phones */
-@media (max-width: 480px){
-
+@media (max-width:480px){
   .joinLogo{
     font-size:36px;
   }
@@ -697,7 +749,7 @@ html, body{
   }
 
   .remoteTile{
-    height:200px;
+    min-height:190px;
   }
 
   .tile.small{
@@ -712,5 +764,4 @@ html, body{
   .ctl{
     width:60px;
   }
-
 }
