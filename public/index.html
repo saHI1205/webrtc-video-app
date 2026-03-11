@@ -49,19 +49,18 @@
 
   <!-- Meeting Screen -->
   <div id="meetingScreen" class="meetingScreen hidden">
-  <div class="topBar">
-    <div class="left">
-      <span class="pill"><i class="fa-solid fa-circle"></i> Live</span>
-      <span id="roomPill" class="pill outline"></span>
+    <div class="topBar">
+      <div class="left">
+        <span class="pill"><i class="fa-solid fa-circle"></i> Live</span>
+        <span id="roomPill" class="pill outline"></span>
+      </div>
+
+      <div class="right">
+        <span id="callTimer" class="timer">00:00</span>
+        <span id="statusText" class="status">Connecting…</span>
+      </div>
     </div>
 
-    <div class="right">
-      <span id="callTimer" class="timer">00:00</span>
-      <span id="statusText" class="status">Connecting…</span>
-    </div>
-  </div>
-
-  <div class="meetingBody">
     <div class="stage">
       <div class="grid" id="videoArea">
         <div id="toast" class="toast hidden"></div>
@@ -97,35 +96,33 @@
         </button>
       </div>
     </div>
+
+    <div class="controlBar">
+      <button id="muteBtn" class="ctl" title="Mute/Unmute">
+        <div class="ctlIcon"><i class="fa-solid fa-microphone"></i></div>
+        <div class="ctlLabel">Mute</div>
+      </button>
+
+      <button id="camBtn" class="ctl" title="Start/Stop Video">
+        <div class="ctlIcon"><i class="fa-solid fa-video"></i></div>
+        <div class="ctlLabel">Stop Video</div>
+      </button>
+      
+      <button id="switchCamBtn" class="ctl" title="Switch Camera">
+        <div class="ctlIcon"><i class="fa-solid fa-rotate"></i></div>
+        <div class="ctlLabel">Switch Cam</div>
+      </button>
+      <button id="chatBtn" class="ctl" title="Chat">
+        <div class="ctlIcon"><i class="fa-regular fa-message"></i></div>
+        <div class="ctlLabel">Chat</div>
+      </button>
+
+      <button id="leaveBtn" class="ctl danger" title="Leave">
+        <div class="ctlIcon"><i class="fa-solid fa-phone-slash"></i></div>
+        <div class="ctlLabel">Leave</div>
+      </button>
+    </div>
   </div>
-
-  <div class="controlBar">
-    <button id="muteBtn" class="ctl" title="Mute/Unmute">
-      <div class="ctlIcon"><i class="fa-solid fa-microphone"></i></div>
-      <div class="ctlLabel">Mute</div>
-    </button>
-
-    <button id="camBtn" class="ctl" title="Start/Stop Video">
-      <div class="ctlIcon"><i class="fa-solid fa-video"></i></div>
-      <div class="ctlLabel">Stop Video</div>
-    </button>
-
-    <button id="switchCamBtn" class="ctl" title="Switch Camera">
-      <div class="ctlIcon"><i class="fa-solid fa-rotate"></i></div>
-      <div class="ctlLabel">Switch Cam</div>
-    </button>
-
-    <button id="chatBtn" class="ctl" title="Chat">
-      <div class="ctlIcon"><i class="fa-regular fa-message"></i></div>
-      <div class="ctlLabel">Chat</div>
-    </button>
-
-    <button id="leaveBtn" class="ctl danger" title="Leave">
-      <div class="ctlIcon"><i class="fa-solid fa-phone-slash"></i></div>
-      <div class="ctlLabel">Leave</div>
-    </button>
-  </div>
-</div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="script.js"></script>
