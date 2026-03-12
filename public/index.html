@@ -29,23 +29,23 @@
   </div>
 
   <!-- Join Screen -->
-<div id="joinScreen" class="joinScreen hidden">
-  <div class="joinTerminalBox">
-    <div class="joinLogo">SNS CONNECT</div>
+  <div id="joinScreen" class="joinScreen hidden">
+    <div class="joinTerminalBox">
+      <div class="joinLogo">SNS CONNECT</div>
 
-    <h2 class="joinHeading">Join a Meeting</h2>
-    <p class="joinSub">Enter your name and Room ID</p>
+      <h2 class="joinHeading">Join a Meeting</h2>
+      <p class="joinSub">Enter your name and Room ID</p>
 
-    <div class="joinForm">
-      <input id="nameInput" placeholder="Username (e.g., Sahithyan)" />
-      <input id="roomInput" placeholder="Room ID (e.g., music-room)" />
-      <button id="joinBtn" class="primaryBtn">
-        <i class="fa-solid fa-right-to-bracket"></i>
-        <span>CONNECT </span>
-      </button>
+      <div class="joinForm">
+        <input id="nameInput" placeholder="Username (e.g., Sahithyan)" />
+        <input id="roomInput" placeholder="Room ID (e.g., music-room)" />
+        <button id="joinBtn" class="primaryBtn">
+          <i class="fa-solid fa-right-to-bracket"></i>
+          <span>CONNECT</span>
+        </button>
+      </div>
     </div>
   </div>
-</div>
 
   <!-- Meeting Screen -->
   <div id="meetingScreen" class="meetingScreen hidden">
@@ -65,16 +65,17 @@
       <div class="grid" id="videoArea">
         <div id="toast" class="toast hidden"></div>
 
-        <div id="remoteGrid" class="remoteGrid"></div>
-
         <div id="remoteOverlay" class="overlay">
           <div class="spinner"></div>
           <div class="overlayText">Waiting for participant…</div>
         </div>
 
-        <div id="localTile" class="tile small">
-          <video id="localVideo" autoplay muted playsinline></video>
-          <div class="nameTag" id="localNameTag">You</div>
+        <!-- ALL videos go into same equal grid -->
+        <div id="videoGrid" class="videoGrid">
+          <div id="localTile" class="videoTile">
+            <video id="localVideo" autoplay muted playsinline></video>
+            <div class="nameTag" id="localNameTag">You</div>
+          </div>
         </div>
       </div>
     </div>
@@ -107,11 +108,12 @@
         <div class="ctlIcon"><i class="fa-solid fa-video"></i></div>
         <div class="ctlLabel">Stop Video</div>
       </button>
-      
+
       <button id="switchCamBtn" class="ctl" title="Switch Camera">
         <div class="ctlIcon"><i class="fa-solid fa-rotate"></i></div>
         <div class="ctlLabel">Switch Cam</div>
       </button>
+
       <button id="chatBtn" class="ctl" title="Chat">
         <div class="ctlIcon"><i class="fa-regular fa-message"></i></div>
         <div class="ctlLabel">Chat</div>
