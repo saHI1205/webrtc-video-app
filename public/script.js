@@ -11,7 +11,8 @@ const joinBtn = document.getElementById("joinBtn");
 const roomPill = document.getElementById("roomPill");
 const localVideo = document.getElementById("localVideo");
 const localNameTag = document.getElementById("localNameTag");
-const remoteGrid = document.getElementById("remoteGrid");
+const localTile = document.getElementById("localTile");
+const videoGrid = document.getElementById("videoGrid");
 const remoteOverlay = document.getElementById("remoteOverlay");
 const toast = document.getElementById("toast");
 const statusText = document.getElementById("statusText");
@@ -99,20 +100,37 @@ function addChatMsg(name, message) {
 
 // Dynamic layout updater
 function updateVideoLayout() {
-  const count = remoteGrid.children.length;
+  const count = videoGrid.children.length;
 
-  remoteGrid.classList.remove("layout-1", "layout-2", "layout-3", "layout-4", "layout-many");
+  videoGrid.classList.remove(
+    "layout-1",
+    "layout-2",
+    "layout-3",
+    "layout-4",
+    "layout-many"
+  );
 
-  if (count <= 1) {
-    remoteGrid.classList.add("layout-1");
+  if (count === 1) {
+    videoGrid.classList.add("layout-1");
   } else if (count === 2) {
-    remoteGrid.classList.add("layout-2");
+    videoGrid.classList.add("layout-2");
   } else if (count === 3) {
-    remoteGrid.classList.add("layout-3");
+    videoGrid.classList.add("layout-3");
   } else if (count === 4) {
-    remoteGrid.classList.add("layout-4");
+    videoGrid.classList.add("layout-4");
   } else {
-    remoteGrid.classList.add("layout-many");
+    videoGrid.classList.add("layout-many");
+  }
+
+  // show waiting overlay only when user is alone
+  if (count <= 1) {
+    remoteOverlay.classList.remove("hidden");
+    setStatus("Waiting for participant…");
+    stopTimer();
+  } else {
+    remoteOverlay.classList.add("hidden");
+    setStatus("Connected");
+    startTimer();
   }
 }
 
@@ -161,6 +179,8 @@ async function startMedia() {
   } catch (e) {
     console.log("Local video autoplay warning:", e);
   }
+
+  updateVideoLayout();
 }
 
 // Remote tiles
@@ -168,7 +188,7 @@ function createRemoteTile(peerId, name = "Remote") {
   if (remoteVideos[peerId]) return remoteVideos[peerId];
 
   const tile = document.createElement("div");
-  tile.className = "remoteTile";
+  tile.className = "videoTile";
   tile.id = `remoteTile-${peerId}`;
 
   const video = document.createElement("video");
@@ -181,7 +201,7 @@ function createRemoteTile(peerId, name = "Remote") {
 
   tile.appendChild(video);
   tile.appendChild(tag);
-  remoteGrid.appendChild(tile);
+  videoGrid.appendChild(tile);
 
   remoteVideos[peerId] = video;
   updateVideoLayout();
@@ -239,9 +259,7 @@ function createPeer(peerId) {
       console.log("Remote video play warning:", e);
     });
 
-    remoteOverlay.classList.add("hidden");
-    setStatus("Connected");
-    startTimer();
+    updateVideoLayout();
   };
 
   pc.oniceconnectionstatechange = () => {
@@ -256,12 +274,6 @@ function createPeer(peerId) {
       }
 
       removeRemoteTile(peerId);
-
-      if (Object.keys(peers).length === 0) {
-        remoteOverlay.classList.remove("hidden");
-        setStatus("Waiting for participant…");
-        stopTimer();
-      }
     }
   };
 
@@ -304,9 +316,6 @@ function cleanupAllPeers() {
     removeRemoteTile(id);
   }
 
-  remoteOverlay.classList.remove("hidden");
-  setStatus("Waiting for participant…");
-  stopTimer();
   updateVideoLayout();
 }
 
@@ -343,7 +352,6 @@ joinBtn.addEventListener("click", async () => {
   try {
     await startMedia();
     socket.emit("join-room", { roomId, name: myName });
-    setStatus("Waiting for participant…");
     updateVideoLayout();
   } catch (e) {
     console.log(e);
@@ -444,12 +452,6 @@ socket.on("user-left", ({ socketId }) => {
   }
 
   removeRemoteTile(socketId);
-
-  if (Object.keys(peers).length === 0) {
-    remoteOverlay.classList.remove("hidden");
-    setStatus("Waiting for participant…");
-    stopTimer();
-  }
 });
 
 // Chat
