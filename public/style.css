@@ -39,7 +39,7 @@ html, body{
   padding:28px;
   z-index:9999;
   overflow:hidden;
-  font-family: "Courier New", monospace;
+  font-family:"Courier New", monospace;
 }
 
 .terminalBox{
@@ -55,7 +55,7 @@ html, body{
   color:#5865ff;
   margin-bottom:22px;
   text-transform:uppercase;
-  text-shadow: 0 0 10px rgba(88,101,255,0.25);
+  text-shadow:0 0 10px rgba(88,101,255,0.25);
 }
 
 .bootLine{
@@ -88,7 +88,7 @@ html, body{
   width:0%;
   height:100%;
   background:#5865ff;
-  animation: terminalProgress 2.5s linear forwards;
+  animation:terminalProgress 2.5s linear forwards;
 }
 
 @keyframes terminalProgress{
@@ -97,7 +97,7 @@ html, body{
 }
 
 /* =========================
-   JOIN SCREEN - TERMINAL THEME
+   JOIN SCREEN
    ========================= */
 .joinScreen{
   min-height:100vh;
@@ -127,36 +127,17 @@ html, body{
   text-shadow:0 0 10px rgba(88,101,255,0.25);
 }
 
-.joinTerminalLine{
-  font-size:24px;
-  line-height:1.7;
-  color:#e5e7eb;
-  white-space:pre-wrap;
-}
-
-.joinHighlight{
-  color:#7dd3fc;
-  font-weight:700;
-}
-
-.joinOk{
-  color:#86efac;
-  font-weight:700;
-}
-
 .joinHeading{
   margin:28px 0 8px;
   font-size:34px;
   font-weight:700;
   color:#ffffff;
-  font-family:"Courier New", monospace;
 }
 
 .joinSub{
   margin:0 0 18px;
   font-size:18px;
   color:#9ca3af;
-  font-family:"Courier New", monospace;
 }
 
 .joinForm{
@@ -177,7 +158,6 @@ html, body{
   outline:none;
   font-size:18px;
   font-family:"Courier New", monospace;
-  box-shadow:none;
 }
 
 .joinForm input::placeholder{
@@ -217,56 +197,9 @@ html, body{
   transform:scale(.99);
 }
 
-.tips{
-  display:flex;
-  align-items:flex-start;
-  gap:10px;
-  margin-top:18px;
-  color:#9ca3af;
-  font-size:15px;
-  font-family:"Courier New", monospace;
-  width:min(700px, 100%);
-}
-
-.tips i{
-  margin-top:2px;
-}
-
-@media(max-width:680px){
-  .joinScreen{
-    padding:18px;
-  }
-
-  .joinLogo{
-    font-size:56px;
-  }
-
-  .joinTerminalLine{
-    font-size:16px;
-  }
-
-  .joinHeading{
-    font-size:26px;
-  }
-
-  .joinSub{
-    font-size:15px;
-  }
-
-  .joinForm input,
-  .primaryBtn{
-    font-size:16px;
-  }
-
-  .tips{
-    font-size:13px;
-  }
-}
-
 /* =========================
-   MEETING SCREEN - TERMINAL THEME
+   MEETING SCREEN
    ========================= */
-
 .meetingScreen{
   min-height:100vh;
   display:flex;
@@ -276,8 +209,6 @@ html, body{
   font-family:"Courier New", monospace;
 }
 
-/* TOP BAR */
-
 .topBar{
   display:flex;
   justify-content:space-between;
@@ -285,6 +216,12 @@ html, body{
   padding:16px 22px;
   background:#050505;
   border-bottom:1px solid #1f2937;
+}
+
+.left, .right{
+  display:flex;
+  align-items:center;
+  gap:10px;
 }
 
 .pill{
@@ -297,7 +234,6 @@ html, body{
   font-size:14px;
   background:#000;
   border-radius:0;
-  font-family:"Courier New", monospace;
 }
 
 .pill i{
@@ -310,8 +246,6 @@ html, body{
   color:#e5e7eb;
 }
 
-/* STATUS + TIMER */
-
 .status{
   color:#9ca3af;
   font-size:14px;
@@ -322,12 +256,9 @@ html, body{
   color:#7dd3fc;
   border:1px solid #374151;
   padding:6px 12px;
-  margin-right:10px;
   background:#000;
   border-radius:0;
 }
-
-/* VIDEO STAGE */
 
 .stage{
   flex:1;
@@ -337,37 +268,33 @@ html, body{
 }
 
 .grid{
-  width:min(1200px, 100%);
+  width:min(1300px, 100%);
+  min-height:72vh;
   position:relative;
 }
 
-/* LOCAL VIDEO */
+.videoGrid{
+  width:100%;
+  min-height:72vh;
+  display:grid;
+  gap:16px;
+}
 
-.tile{
+.videoTile{
   position:relative;
   background:#000;
   border:1px solid #374151;
   overflow:hidden;
+  min-height:240px;
 }
 
-.tile video{
+.videoTile video{
   width:100%;
   height:100%;
   object-fit:cover;
   display:block;
+  background:#000;
 }
-
-.tile.small{
-  position:absolute;
-  right:20px;
-  bottom:20px;
-  width:240px;
-  height:160px;
-  border:1px solid #5865ff;
-  box-shadow:0 0 8px rgba(88,101,255,0.4);
-}
-
-/* USER NAME TAG */
 
 .nameTag{
   position:absolute;
@@ -378,11 +305,36 @@ html, body{
   border:1px solid #374151;
   font-size:13px;
   color:#e5e7eb;
-  font-family:"Courier New", monospace;
+  z-index:2;
 }
 
-/* WAITING SCREEN */
+/* Equal layouts based on total video count */
+.videoGrid.layout-1{
+  grid-template-columns:1fr;
+  grid-template-rows:minmax(72vh, 1fr);
+}
 
+.videoGrid.layout-2{
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:minmax(72vh, 1fr);
+}
+
+.videoGrid.layout-3{
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:repeat(2, minmax(280px, 1fr));
+}
+
+.videoGrid.layout-4{
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:repeat(2, minmax(280px, 1fr));
+}
+
+.videoGrid.layout-many{
+  grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
+  grid-auto-rows:minmax(240px, 1fr);
+}
+
+/* Waiting overlay */
 .overlay{
   position:absolute;
   inset:0;
@@ -393,6 +345,7 @@ html, body{
   gap:14px;
   background:#000;
   color:#e5e7eb;
+  z-index:10;
 }
 
 .spinner{
@@ -413,31 +366,7 @@ html, body{
   color:#9ca3af;
 }
 
-/* REMOTE VIDEO GRID */
-
-.remoteGrid{
-  display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap:16px;
-  width:100%;
-  min-height:70vh;
-}
-
-.remoteTile{
-  height:320px;
-  background:#000;
-  border:1px solid #374151;
-  position:relative;
-}
-
-.remoteTile video{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-
-/* CHAT PANEL */
-
+/* Chat */
 .chatPanel{
   position:fixed;
   top:0;
@@ -455,6 +384,9 @@ html, body{
 .chatHeader{
   padding:16px;
   border-bottom:1px solid #1f2937;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
 }
 
 .chatTitle{
@@ -478,14 +410,13 @@ html, body{
 .chatMsg .who{
   font-size:13px;
   color:#7dd3fc;
+  margin-bottom:4px;
 }
 
 .chatMsg .text{
   font-size:14px;
   color:#e5e7eb;
 }
-
-/* CHAT INPUT */
 
 .chatRow{
   padding:12px;
@@ -503,13 +434,42 @@ html, body{
   font-family:"Courier New", monospace;
 }
 
-.iconBtn.primary{
-  background:#5865ff;
-  border:1px solid #5865ff;
+.iconBtn{
+  min-width:42px;
+  height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid #374151;
+  background:#000;
+  color:#e5e7eb;
+  cursor:pointer;
 }
 
-/* CONTROL BAR */
+.iconBtn:hover{
+  border-color:#5865ff;
+  color:#5865ff;
+}
 
+.iconBtn.primary{
+  background:#5865ff;
+  border-color:#5865ff;
+  color:#fff;
+}
+
+.iconBtn.primary:hover{
+  background:#4752e6;
+  border-color:#4752e6;
+  color:#fff;
+}
+
+.iconBtn.ghost{
+  background:#000;
+  border-color:#374151;
+  color:#e5e7eb;
+}
+
+/* Controls */
 .controlBar{
   position:sticky;
   bottom:0;
@@ -519,6 +479,7 @@ html, body{
   display:flex;
   justify-content:center;
   gap:14px;
+  flex-wrap:wrap;
 }
 
 .ctl{
@@ -546,6 +507,7 @@ html, body{
 
 .ctlLabel{
   font-size:13px;
+  text-align:center;
 }
 
 .ctl.danger{
@@ -557,50 +519,48 @@ html, body{
   background:#ef4444;
   color:#fff;
 }
-/* =====================================
-   RESPONSIVE DESIGN FOR LAPTOP + MOBILE
-   ===================================== */
 
-/* Tablets */
+/* Toast */
+.toast{
+  position:absolute;
+  top:16px;
+  left:50%;
+  transform:translateX(-50%);
+  padding:10px 16px;
+  background:#000;
+  color:#e5e7eb;
+  border:1px solid #5865ff;
+  z-index:100;
+  font-size:14px;
+}
+
+/* Responsive */
 @media (max-width: 1024px){
-
   .joinLogo{
     font-size:64px;
-  }
-
-  .joinTerminalLine{
-    font-size:18px;
   }
 
   .joinHeading{
     font-size:28px;
   }
 
-  .remoteGrid{
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  .videoGrid.layout-2{
+    grid-template-columns:1fr 1fr;
   }
 
-  .tile.small{
-    width:200px;
-    height:140px;
+  .videoGrid.layout-3,
+  .videoGrid.layout-4{
+    grid-template-columns:1fr 1fr;
   }
-
 }
 
-/* Mobile Phones */
 @media (max-width: 768px){
-
   .joinScreen{
     padding:20px;
   }
 
   .joinLogo{
     font-size:48px;
-  }
-
-  .joinTerminalLine{
-    font-size:15px;
-    line-height:1.6;
   }
 
   .joinHeading{
@@ -611,21 +571,11 @@ html, body{
     font-size:14px;
   }
 
-  .joinForm input{
-    font-size:15px;
-    padding:12px;
-  }
-
+  .joinForm input,
   .primaryBtn{
     font-size:15px;
     padding:12px;
   }
-
-  .tips{
-    font-size:13px;
-  }
-
-  /* Meeting screen */
 
   .topBar{
     padding:12px;
@@ -633,37 +583,43 @@ html, body{
     gap:8px;
   }
 
-  .timer{
-    font-size:13px;
-  }
-
-  .status{
-    font-size:13px;
-  }
-
   .stage{
     padding:10px;
   }
 
-  .remoteGrid{
-    grid-template-columns: 1fr;
-    gap:12px;
+  .grid,
+  .videoGrid{
+    min-height:60vh;
   }
 
-  .remoteTile{
-    height:240px;
+  .videoGrid.layout-1{
+    grid-template-columns:1fr;
+    grid-template-rows:minmax(60vh, 1fr);
   }
 
-  /* Local video */
-
-  .tile.small{
-    width:140px;
-    height:100px;
-    right:10px;
-    bottom:10px;
+  .videoGrid.layout-2{
+    grid-template-columns:1fr;
+    grid-template-rows:repeat(2, minmax(220px, 1fr));
   }
 
-  /* Control buttons */
+  .videoGrid.layout-3{
+    grid-template-columns:1fr;
+    grid-template-rows:repeat(3, minmax(220px, 1fr));
+  }
+
+  .videoGrid.layout-4{
+    grid-template-columns:1fr;
+    grid-template-rows:repeat(4, minmax(220px, 1fr));
+  }
+
+  .videoGrid.layout-many{
+    grid-template-columns:1fr;
+    grid-auto-rows:minmax(220px, 1fr);
+  }
+
+  .videoTile{
+    min-height:220px;
+  }
 
   .controlBar{
     gap:8px;
@@ -682,27 +638,15 @@ html, body{
   .ctlLabel{
     font-size:11px;
   }
-
 }
 
-/* Small Phones */
 @media (max-width: 480px){
-
   .joinLogo{
     font-size:36px;
   }
 
-  .joinTerminalLine{
-    font-size:14px;
-  }
-
-  .remoteTile{
-    height:200px;
-  }
-
-  .tile.small{
-    width:120px;
-    height:90px;
+  .videoTile{
+    min-height:200px;
   }
 
   .controlBar{
@@ -712,5 +656,4 @@ html, body{
   .ctl{
     width:60px;
   }
-
 }
