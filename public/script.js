@@ -1,6 +1,4 @@
 const socket = io();
-// If your frontend and backend are on different domains, use this instead:
-// const socket = io("https://YOUR_SERVER_DOMAIN");
 
 // DOM
 const splashScreen = document.getElementById("splashScreen");
@@ -11,16 +9,17 @@ const roomInput = document.getElementById("roomInput");
 const joinBtn = document.getElementById("joinBtn");
 
 const roomPill = document.getElementById("roomPill");
-const localVideo = document.getElementById("localVideo");
 const miniLocalVideo = document.getElementById("miniLocalVideo");
-const localNameTag = document.getElementById("localNameTag");
 const videoGrid = document.getElementById("videoGrid");
-const videoArea = document.getElementById("videoArea");
 const remoteOverlay = document.getElementById("remoteOverlay");
 const toast = document.getElementById("toast");
 const statusText = document.getElementById("statusText");
 const callTimer = document.getElementById("callTimer");
 const recBadge = document.getElementById("recBadge");
+
+const mainVideo = document.getElementById("mainVideo");
+const mainNameTag = document.getElementById("mainNameTag");
+const thumbStrip = document.getElementById("thumbStrip");
 
 const chatBtn = document.getElementById("chatBtn");
 const chatPanel = document.getElementById("chatPanel");
@@ -66,9 +65,12 @@ let localStream = null;
 let currentFacingMode = "user";
 
 const peers = {};
-const remoteVideos = {};
 const remoteNames = {};
 const pendingCandidates = {};
+const remoteStreams = {};
+const participants = {};
+
+let mainParticipantId = null;
 
 let timerInterval = null;
 let startTimeMs = null;
@@ -77,32 +79,53 @@ let startTimeMs = null;
 let mediaRecorder = null;
 let recordedChunks = [];
 let recordingStream = null;
-let recordingPreviewVideo = null;
 
 const rtcConfig = {
   iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
     {
-      urls: [
-        "turn:YOUR_TURN_SERVER:3478?transport=udp",
-        "turn:YOUR_TURN_SERVER:3478?transport=tcp"
-      ],
-      username: "YOUR_TURN_USERNAME",
-      credential: "YOUR_TURN_PASSWORD"
-    }
+      urls: "stun:stun.relay.metered.ca:80",
+    },
+    {
+      urls: "turn:global.relay.metered.ca:80",
+      username: "ad2811a6461717db07e01100",
+      credential: "ihlYqRkUJDKGx98W",
+    },
+    {
+      urls: "turn:global.relay.metered.ca:80?transport=tcp",
+      username: "ad2811a6461717db07e01100",
+      credential: "ihlYqRkUJDKGx98W",
+    },
+    {
+      urls: "turn:global.relay.metered.ca:443",
+      username: "ad2811a6461717db07e01100",
+      credential: "ihlYqRkUJDKGx98W",
+    },
+    {
+      urls: "turns:global.relay.metered.ca:443?transport=tcp",
+      username: "ad2811a6461717db07e01100",
+      credential: "ihlYqRkUJDKGx98W",
+    },
   ],
   iceCandidatePoolSize: 10
 };
 
+const peerConnectionConfig = {
+  ...rtcConfig,
+  iceTransportPolicy: "all",
+  bundlePolicy: "max-bundle",
+  rtcpMuxPolicy: "require"
+};
+
 // UI helpers
 function showToast(msg) {
+  if (!toast) return;
   toast.textContent = msg;
   toast.classList.remove("hidden");
   setTimeout(() => toast.classList.add("hidden"), 1800);
 }
 
 function setStatus(msg) {
-  statusText.textContent = msg;
+  if (statusText) statusText.textContent = msg;
 }
 
 function escapeHtml(s) {
@@ -116,6 +139,8 @@ function escapeHtml(s) {
 }
 
 function addChatMsg(name, message) {
+  if (!chatBox) return;
+
   const div = document.createElement("div");
   div.className = "chatMsg";
   div.innerHTML = `
@@ -145,39 +170,8 @@ function updateRecBadge(show) {
   recBadge.classList.toggle("hidden", !show);
 }
 
-// Dynamic layout updater
-function updateVideoLayout() {
-  const count = videoGrid.children.length;
-
-  videoGrid.classList.remove(
-    "layout-1",
-    "layout-2",
-    "layout-3",
-    "layout-4",
-    "layout-many"
-  );
-
-  if (count === 1) {
-    videoGrid.classList.add("layout-1");
-  } else if (count === 2) {
-    videoGrid.classList.add("layout-2");
-  } else if (count === 3) {
-    videoGrid.classList.add("layout-3");
-  } else if (count === 4) {
-    videoGrid.classList.add("layout-4");
-  } else {
-    videoGrid.classList.add("layout-many");
-  }
-
-  if (count <= 1) {
-    remoteOverlay.classList.remove("hidden");
-    setStatus("Waiting for participant…");
-    stopTimer();
-  } else {
-    remoteOverlay.classList.add("hidden");
-    setStatus("Connected");
-    startTimer();
-  }
+function logPeerDebug(peerId, label, value) {
+  console.log(`[${peerId}] ${label}:`, value);
 }
 
 // Timer
@@ -189,6 +183,7 @@ function formatTime(totalSeconds) {
   if (h > 0) {
     return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   }
+
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
@@ -196,11 +191,11 @@ function startTimer() {
   if (timerInterval) return;
 
   startTimeMs = Date.now();
-  callTimer.textContent = "00:00";
+  if (callTimer) callTimer.textContent = "00:00";
 
   timerInterval = setInterval(() => {
     const elapsed = Math.floor((Date.now() - startTimeMs) / 1000);
-    callTimer.textContent = formatTime(elapsed);
+    if (callTimer) callTimer.textContent = formatTime(elapsed);
   }, 1000);
 }
 
@@ -208,7 +203,133 @@ function stopTimer() {
   if (timerInterval) clearInterval(timerInterval);
   timerInterval = null;
   startTimeMs = null;
-  callTimer.textContent = "00:00";
+  if (callTimer) callTimer.textContent = "00:00";
+}
+
+// Participant UI
+function participantCount() {
+  return Object.keys(participants).length;
+}
+
+function ensureMainParticipant() {
+  if (!mainParticipantId && participants.local) {
+    mainParticipantId = "local";
+  }
+
+  if (mainParticipantId && participants[mainParticipantId]) {
+    return;
+  }
+
+  const ids = Object.keys(participants);
+  mainParticipantId = ids.length ? ids[0] : null;
+}
+
+function setMainParticipant(id) {
+  if (!participants[id]) return;
+
+  mainParticipantId = id;
+  renderParticipants();
+}
+
+function createThumbTile(id, participant) {
+  const tile = document.createElement("div");
+  tile.className = "thumbTile";
+  tile.dataset.id = id;
+
+  const video = document.createElement("video");
+  video.autoplay = true;
+  video.playsInline = true;
+  video.muted = true;
+  video.setAttribute("autoplay", "");
+  video.setAttribute("playsinline", "");
+  video.srcObject = participant.stream;
+
+  const tag = document.createElement("div");
+  tag.className = "nameTag";
+  tag.textContent = participant.name || "Participant";
+
+  tile.appendChild(video);
+  tile.appendChild(tag);
+
+  tile.addEventListener("click", () => {
+    setMainParticipant(id);
+  });
+
+  return tile;
+}
+
+function renderParticipants() {
+  ensureMainParticipant();
+
+  thumbStrip.innerHTML = "";
+
+  if (!mainParticipantId || !participants[mainParticipantId]) {
+    if (mainVideo) mainVideo.srcObject = null;
+    if (mainNameTag) mainNameTag.textContent = "You";
+    return;
+  }
+
+  const mainParticipant = participants[mainParticipantId];
+
+  if (mainVideo.srcObject !== mainParticipant.stream) {
+    mainVideo.srcObject = mainParticipant.stream;
+  }
+
+  mainVideo.muted = !!mainParticipant.isLocal;
+  mainNameTag.textContent = mainParticipant.name || "Participant";
+
+  mainVideo.play().catch((e) => {
+    console.log("Main video play warning:", e);
+  });
+
+  Object.keys(participants).forEach((id) => {
+    if (id === mainParticipantId) return;
+    const tile = createThumbTile(id, participants[id]);
+    thumbStrip.appendChild(tile);
+  });
+
+  updateMeetingState();
+}
+
+function updateMeetingState() {
+  const count = participantCount();
+
+  if (count <= 1) {
+    if (remoteOverlay) remoteOverlay.classList.remove("hidden");
+    setStatus("Waiting for participant…");
+    stopTimer();
+  } else {
+    if (remoteOverlay) remoteOverlay.classList.add("hidden");
+    setStatus("Connected");
+    startTimer();
+  }
+}
+
+function addOrUpdateParticipant(id, stream, name, isLocal = false) {
+  participants[id] = {
+    stream,
+    name,
+    isLocal
+  };
+
+  if (!mainParticipantId) {
+    mainParticipantId = id;
+  }
+
+  renderParticipants();
+}
+
+function removeParticipant(id) {
+  if (!participants[id]) return;
+
+  delete participants[id];
+
+  if (mainParticipantId === id) {
+    const ids = Object.keys(participants);
+    mainParticipantId = ids.length ? ids[0] : null;
+  }
+
+  renderParticipants();
 }
 
 // Media
@@ -218,24 +339,15 @@ async function startMedia() {
     audio: true
   });
 
-  localVideo.srcObject = localStream;
   if (miniLocalVideo) miniLocalVideo.srcObject = localStream;
 
   try {
-    await localVideo.play();
+    if (miniLocalVideo) await miniLocalVideo.play();
   } catch (e) {
-    console.log("Local video autoplay warning:", e);
+    console.log("Mini local video autoplay warning:", e);
   }
 
-  if (miniLocalVideo) {
-    try {
-      await miniLocalVideo.play();
-    } catch (e) {
-      console.log("Mini local video autoplay warning:", e);
-    }
-  }
-
-  updateVideoLayout();
+  addOrUpdateParticipant("local", localStream, myName, true);
 }
 
 async function replaceVideoTrackForPeers(newTrack) {
@@ -275,12 +387,16 @@ async function switchCamera() {
 
     localStream.removeTrack(oldVideoTrack);
     oldVideoTrack.stop();
-
     localStream.addTrack(newVideoTrack);
-    localVideo.srcObject = localStream;
+
     if (miniLocalVideo) miniLocalVideo.srcObject = localStream;
 
+    if (participants.local) {
+      participants.local.stream = localStream;
+    }
+
     currentFacingMode = nextFacingMode;
+    renderParticipants();
     showToast("Camera switched");
   } catch (error) {
     console.log("Switch camera error:", error);
@@ -288,41 +404,10 @@ async function switchCamera() {
   }
 }
 
-// Remote tiles
-function createRemoteTile(peerId, name = "Remote") {
-  if (remoteVideos[peerId]) return remoteVideos[peerId];
-
-  const tile = document.createElement("div");
-  tile.className = "videoTile";
-  tile.id = `remoteTile-${peerId}`;
-
-  const video = document.createElement("video");
-  video.autoplay = true;
-  video.playsInline = true;
-
-  const tag = document.createElement("div");
-  tag.className = "nameTag";
-  tag.textContent = name;
-
-  tile.appendChild(video);
-  tile.appendChild(tag);
-  videoGrid.appendChild(tile);
-
-  remoteVideos[peerId] = video;
-  updateVideoLayout();
-
-  return video;
-}
-
-function removeRemoteTile(peerId) {
-  const tile = document.getElementById(`remoteTile-${peerId}`);
-  if (tile) tile.remove();
-
-  delete remoteVideos[peerId];
-  delete remoteNames[peerId];
-  delete pendingCandidates[peerId];
-
-  updateVideoLayout();
+// Remote stream attach
+function attachRemoteStream(peerId, stream) {
+  const name = remoteNames[peerId] || "Remote";
+  addOrUpdateParticipant(peerId, stream, name, false);
 }
 
 async function flushPendingCandidates(peerId, pc) {
@@ -343,7 +428,7 @@ async function flushPendingCandidates(peerId, pc) {
 function createPeer(peerId) {
   if (peers[peerId]) return peers[peerId];
 
-  const pc = new RTCPeerConnection(rtcConfig);
+  const pc = new RTCPeerConnection(peerConnectionConfig);
 
   pc.onicecandidate = (event) => {
     if (event.candidate) {
@@ -356,34 +441,59 @@ function createPeer(peerId) {
   };
 
   pc.ontrack = (event) => {
-    const name = remoteNames[peerId] || "Remote";
-    const vid = createRemoteTile(peerId, name);
-    vid.srcObject = event.streams[0];
+    logPeerDebug(peerId, "ontrack streams", event.streams);
 
-    vid.play().catch((e) => {
-      console.log("Remote video play warning:", e);
-    });
+    let stream = event.streams && event.streams[0];
 
-    updateVideoLayout();
+    if (!stream) {
+      if (!remoteStreams[peerId]) {
+        remoteStreams[peerId] = new MediaStream();
+      }
+      remoteStreams[peerId].addTrack(event.track);
+      stream = remoteStreams[peerId];
+    } else {
+      remoteStreams[peerId] = stream;
+    }
+
+    attachRemoteStream(peerId, stream);
   };
 
   pc.oniceconnectionstatechange = () => {
-    console.log("ICE state:", peerId, pc.iceConnectionState);
+    logPeerDebug(peerId, "ICE state", pc.iceConnectionState);
 
     if (["failed", "disconnected", "closed"].includes(pc.iceConnectionState)) {
-      if (peers[peerId]) {
+      if (pc.iceConnectionState === "failed") {
+        showToast("Media connection failed");
+      }
+
+      if (peers[peerId] && pc.iceConnectionState === "closed") {
         try {
           peers[peerId].close();
         } catch (_) {}
         delete peers[peerId];
+        removeParticipant(peerId);
       }
-
-      removeRemoteTile(peerId);
     }
   };
 
   pc.onconnectionstatechange = () => {
-    console.log("Peer state:", peerId, pc.connectionState);
+    logPeerDebug(peerId, "Peer state", pc.connectionState);
+
+    if (pc.connectionState === "failed") {
+      showToast("Peer connection failed");
+    }
+  };
+
+  pc.onicegatheringstatechange = () => {
+    logPeerDebug(peerId, "ICE gathering", pc.iceGatheringState);
+  };
+
+  pc.onsignalingstatechange = () => {
+    logPeerDebug(peerId, "Signaling state", pc.signalingState);
+  };
+
+  pc.onicecandidateerror = (event) => {
+    console.log(`[${peerId}] ICE candidate error:`, event);
   };
 
   if (localStream) {
@@ -399,7 +509,11 @@ function createPeer(peerId) {
 async function makeOffer(peerId) {
   const pc = createPeer(peerId);
 
-  const offer = await pc.createOffer();
+  const offer = await pc.createOffer({
+    offerToReceiveAudio: true,
+    offerToReceiveVideo: true
+  });
+
   await pc.setLocalDescription(offer);
 
   socket.emit("webrtc-offer", {
@@ -412,7 +526,10 @@ async function makeOffer(peerId) {
 
 // Recording
 function createMixedAudioTrack(streams) {
-  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return null;
+
+  const audioContext = new AudioCtx();
   const destination = audioContext.crKe9UDk2eYoMm9CAJhsv2CBGW7CUFSPNhu();
   let hasAudio = false;
 
@@ -436,10 +553,7 @@ async function startRecording() {
       audio: true
     });
 
-    const mixedAudioTrack = createMixedAudioTrack([
-      displayStream,
-      localStream
-    ]);
+    const mixedAudioTrack = createMixedAudioTrack([displayStream, localStream]);
 
     recordingStream = new MediaStream();
 
@@ -480,10 +594,9 @@ async function startRecording() {
       recordingStream = null;
       mediaRecorder = null;
       recordedChunks = [];
-      recordingPreviewVideo = null;
 
-      startRecordBtn.classList.remove("hidden");
-      stopRecordBtn.classList.add("hidden");
+      if (startRecordBtn) startRecordBtn.classList.remove("hidden");
+      if (stopRecordBtn) stopRecordBtn.classList.add("hidden");
       updateRecBadge(false);
 
       showToast("Recording saved");
@@ -500,10 +613,10 @@ async function startRecording() {
 
     mediaRecorder.start(1000);
 
-    startRecordBtn.classList.add("hidden");
-    stopRecordBtn.classList.remove("hidden");
+    if (startRecordBtn) startRecordBtn.classList.add("hidden");
+    if (stopRecordBtn) stopRecordBtn.classList.remove("hidden");
     updateRecBadge(true);
-    menuDropdown.classList.add("hidden");
+    if (menuDropdown) menuDropdown.classList.add("hidden");
 
     showToast("Recording started");
   } catch (error) {
@@ -517,17 +630,12 @@ function stopRecording() {
     mediaRecorder.stop();
     showToast("Stopping recording...");
   }
-  menuDropdown.classList.add("hidden");
+  if (menuDropdown) menuDropdown.classList.add("hidden");
 }
 
 function getBestScreenshotVideo() {
-  const remoteTileVideo = videoGrid.querySelector('[id^="remoteTile-"] video');
-  if (remoteTileVideo && remoteTileVideo.videoWidth && remoteTileVideo.videoHeight) {
-    return remoteTileVideo;
-  }
-
-  if (localVideo && localVideo.videoWidth && localVideo.videoHeight) {
-    return localVideo;
+  if (mainVideo && mainVideo.videoWidth && mainVideo.videoHeight) {
+    return mainVideo;
   }
 
   return null;
@@ -558,7 +666,7 @@ function takeScreenshot() {
       showToast("Screenshot saved");
     }, "image/png");
 
-    menuDropdown.classList.add("hidden");
+    if (menuDropdown) menuDropdown.classList.add("hidden");
   } catch (error) {
     console.log("Screenshot error:", error);
     showToast("Screenshot failed");
@@ -572,10 +680,26 @@ function cleanupAllPeers() {
       peers[id].close();
     } catch (_) {}
     delete peers[id];
-    removeRemoteTile(id);
   }
 
-  updateVideoLayout();
+  for (const id of Object.keys(remoteStreams)) {
+    delete remoteStreams[id];
+  }
+
+  for (const id of Object.keys(remoteNames)) {
+    delete remoteNames[id];
+  }
+
+  for (const id of Object.keys(pendingCandidates)) {
+    delete pendingCandidates[id];
+  }
+
+  for (const id of Object.keys(participants)) {
+    if (id !== "local") delete participants[id];
+  }
+
+  mainParticipantId = "local";
+  renderParticipants();
 }
 
 function cleanupMedia() {
@@ -584,23 +708,30 @@ function cleanupMedia() {
     localStream = null;
   }
 
-  localVideo.srcObject = null;
   if (miniLocalVideo) miniLocalVideo.srcObject = null;
+  if (mainVideo) mainVideo.srcObject = null;
+
+  for (const id of Object.keys(participants)) {
+    delete participants[id];
+  }
+
+  mainParticipantId = null;
+  renderParticipants();
 }
 
 function openChat() {
-  chatPanel.classList.remove("hidden");
+  if (chatPanel) chatPanel.classList.remove("hidden");
 }
 
 function closeChat() {
-  chatPanel.classList.add("hidden");
+  if (chatPanel) chatPanel.classList.add("hidden");
 }
 
 // Menu
 if (menuBtn) {
   menuBtn.addEventListener("click", (e) => {
     e.stopPropagation();
-    menuDropdown.classList.toggle("hidden");
+    if (menuDropdown) menuDropdown.classList.toggle("hidden");
   });
 }
 
@@ -609,6 +740,7 @@ document.addEventListener("click", (e) => {
     menuDropdown &&
     !menuDropdown.classList.contains("hidden") &&
     !menuDropdown.contains(e.target) &&
+    menuBtn &&
     !menuBtn.contains(e.target)
   ) {
     menuDropdown.classList.add("hidden");
@@ -629,7 +761,7 @@ joinBtn.addEventListener("click", async () => {
   meetingScreen.classList.remove("hidden");
 
   roomPill.textContent = roomId;
-  localNameTag.textContent = myName;
+  mainNameTag.textContent = myName;
 
   setStatus("Connecting…");
   showToast("Joining meeting…");
@@ -637,7 +769,7 @@ joinBtn.addEventListener("click", async () => {
   try {
     await startMedia();
     socket.emit("join-room", { roomId, name: myName });
-    updateVideoLayout();
+    updateMeetingState();
   } catch (e) {
     console.log(e);
     showToast("Camera/Mic permission blocked!");
@@ -736,7 +868,7 @@ socket.on("user-left", ({ socketId }) => {
     delete peers[socketId];
   }
 
-  removeRemoteTile(socketId);
+  removeParticipant(socketId);
 });
 
 // Chat
@@ -822,6 +954,7 @@ leaveBtn.addEventListener("click", () => {
 
   roomId = "";
   updateRecBadge(false);
+  stopTimer();
 });
 
 window.addEventListener("beforeunload", () => {
