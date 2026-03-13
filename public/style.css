@@ -12,6 +12,11 @@
   --blue2:#0078d4;
   --danger:#f25056;
   --shadow:0 8px 28px rgba(0,0,0,.35);
+
+  --topbar-h:72px;
+  --controlbar-h:88px;
+  --stage-pad:10px;
+  --thumb-h:120px;
 }
 
 *{
@@ -390,8 +395,8 @@ body{
 
 /* Meeting Screen */
 .meetingScreen{
-  min-height:100vh;
-  height:100vh;
+  height:100dvh;
+  min-height:100dvh;
   display:flex;
   flex-direction:column;
   background:#14141b;
@@ -400,7 +405,7 @@ body{
 
 /* Top bar */
 .topBar{
-  height:72px;
+  min-height:var(--topbar-h);
   padding:0 18px;
   display:flex;
   align-items:center;
@@ -542,6 +547,7 @@ body{
   overflow:hidden;
   background:#0e0f13;
   border:1px solid rgba(255,255,255,.10);
+  flex-shrink:0;
 }
 
 .miniSelfPreview video{
@@ -553,9 +559,9 @@ body{
 
 /* Stage */
 .stage{
-  flex:1;
+  flex:1 1 auto;
   min-height:0;
-  padding:10px;
+  padding:var(--stage-pad);
   overflow:hidden;
   background:radial-gradient(circle at center, #1a2433 0%, #11161f 45%, #0b0f15 100%);
 }
@@ -564,15 +570,17 @@ body{
   position:relative;
   width:100%;
   height:100%;
+  min-height:0;
   overflow:hidden;
-  padding-bottom:90px;
+  padding-bottom:calc(var(--controlbar-h) + 8px);
 }
 
 .videoGrid{
   width:100%;
   height:100%;
-  display:flex;
-  flex-direction:column;
+  min-height:0;
+  display:grid;
+  grid-template-rows:minmax(0,1fr) var(--thumb-h);
   gap:12px;
   background:#0f1013;
   border-radius:12px;
@@ -581,7 +589,6 @@ body{
 }
 
 .mainVideoArea{
-  flex:1 1 auto;
   min-height:0;
   display:flex;
   align-items:center;
@@ -591,10 +598,9 @@ body{
 
 .mainVideoTile{
   position:relative;
-  width:min(1100px, 100%);
+  width:100%;
   height:100%;
-  max-height:100%;
-  min-height:220px;
+  min-height:0;
   border-radius:18px;
   overflow:hidden;
   background:#000;
@@ -610,16 +616,17 @@ body{
 }
 
 .thumbStrip{
-  flex:0 0 120px;
-  min-height:120px;
-  max-height:120px;
+  min-height:0;
+  height:100%;
   display:flex;
+  flex-wrap:nowrap;
   gap:10px;
   overflow-x:auto;
   overflow-y:hidden;
-  padding:4px 2px 2px;
+  padding:2px;
   scrollbar-width:thin;
   scrollbar-color:rgba(255,255,255,.18) transparent;
+  -webkit-overflow-scrolling:touch;
 }
 
 .thumbStrip::-webkit-scrollbar{
@@ -713,7 +720,7 @@ body{
   top:72px;
   right:14px;
   width:min(360px, calc(100vw - 28px));
-  height:calc(100vh - 156px);
+  height:calc(100dvh - 156px);
   border-radius:18px;
   background:rgba(31,31,40,.96);
   border:1px solid rgba(255,255,255,.08);
@@ -826,6 +833,7 @@ body{
   border:1px solid rgba(255,255,255,.08);
   backdrop-filter:blur(12px);
   box-shadow:var(--shadow);
+  min-height:64px;
 }
 
 .ctl{
@@ -838,6 +846,7 @@ body{
   align-items:center;
   justify-content:center;
   transition:.18s ease;
+  flex-shrink:0;
 }
 
 .ctlIcon{
@@ -880,14 +889,8 @@ body{
 
 /* Responsive */
 @media (max-width: 992px){
-  .mainVideoTile{
-    min-height:220px;
-  }
-
-  .thumbStrip{
-    flex:0 0 110px;
-    min-height:110px;
-    max-height:110px;
+  :root{
+    --thumb-h:108px;
   }
 
   .thumbTile{
@@ -896,9 +899,15 @@ body{
 }
 
 @media (max-width: 768px){
+  :root{
+    --topbar-h:92px;
+    --controlbar-h:86px;
+    --stage-pad:8px;
+    --thumb-h:88px;
+  }
+
   .topBar{
     height:auto;
-    min-height:72px;
     padding:10px 12px;
     gap:10px;
     flex-wrap:wrap;
@@ -924,32 +933,34 @@ body{
   }
 
   .stage{
-    padding:8px;
+    padding:var(--stage-pad);
   }
 
   .grid{
-    padding-bottom:88px;
+    padding-bottom:calc(var(--controlbar-h) + 8px);
   }
 
   .videoGrid{
-    gap:10px;
+    grid-template-rows:minmax(0,1fr) var(--thumb-h);
+    gap:8px;
     padding:6px;
     border-radius:10px;
   }
 
   .mainVideoTile{
-    min-height:180px;
     border-radius:14px;
   }
 
+  .mainVideoTile video{
+    object-fit:cover;
+  }
+
   .thumbStrip{
-    flex:0 0 95px;
-    min-height:95px;
-    max-height:95px;
+    gap:8px;
   }
 
   .thumbTile{
-    flex:0 0 150px;
+    flex:0 0 132px;
     border-radius:12px;
   }
 
@@ -957,7 +968,7 @@ body{
     top:0;
     right:0;
     width:100vw;
-    height:100vh;
+    height:100dvh;
     border-radius:0;
   }
 
@@ -974,6 +985,12 @@ body{
 }
 
 @media (max-width: 480px){
+  :root{
+    --topbar-h:104px;
+    --controlbar-h:84px;
+    --thumb-h:76px;
+  }
+
   .joinCard{
     padding:22px;
     border-radius:20px;
@@ -995,24 +1012,30 @@ body{
   .controlBar{
     width:calc(100% - 16px);
     justify-content:space-evenly;
-  }
-
-  .mainVideoTile{
-    min-height:150px;
-  }
-
-  .thumbStrip{
-    flex:0 0 82px;
-    min-height:82px;
-    max-height:82px;
+    padding:10px 8px;
   }
 
   .thumbTile{
-    flex:0 0 125px;
+    flex:0 0 112px;
   }
 
   .nameTag{
     font-size:11px;
     padding:4px 8px;
+  }
+}
+
+@media (max-width: 380px){
+  :root{
+    --thumb-h:70px;
+  }
+
+  .thumbTile{
+    flex:0 0 98px;
+  }
+
+  .ctl{
+    width:44px;
+    height:44px;
   }
 }
