@@ -10,38 +10,50 @@
 </head>
 
 <body>
-  <!-- Terminal Boot Screen -->
-  <div id="splashScreen" class="terminalBoot">
-    <div class="terminalBox">
-      <div class="bootLogo">SNS Connect</div>
+  <!-- Splash Screen -->
+  <div id="splashScreen" class="skypeBoot">
+    <div class="bootBackgroundGlow bootGlow1"></div>
+    <div class="bootBackgroundGlow bootGlow2"></div>
+    <div class="bootBackgroundGlow bootGlow3"></div>
 
-      <div class="bootLine">Initializing meeting environment...</div>
-      <div class="bootLine">Loading secure connection modules...</div>
-      <div class="bootLine">Creator: <span class="bootHighlight">Sahithyan [164] Naveenkumar [035] Soorjayan [165]</span></div>
-      <div class="bootLine">System check: <span class="bootOk">OK</span></div>
-      <div class="bootLine">Camera/Microphone services: <span class="bootOk">READY</span></div>
-      <div class="bootLine">Starting application<span id="bootDots"></span></div>
+    <div class="bootCenterWrap">
+      <div class="bootSymbolWrap">
+        <div class="bootRing bootRing1"></div>
+        <div class="bootRing bootRing2"></div>
+        <div class="bootRing bootRing3"></div>
 
-      <div class="bootProgressWrap">
-        <div class="bootProgressBar"></div>
+        <div class="bootCore">
+          <span class="bootCoreLetter">S</span>
+        </div>
+      </div>
+
+      <div class="bootBrandReveal">
+        <div class="bootAppName">SNS CONNECT</div>
+        <div class="bootAppSub">Secure video meetings</div>
       </div>
     </div>
   </div>
 
   <!-- Join Screen -->
   <div id="joinScreen" class="joinScreen hidden">
-    <div class="joinTerminalBox">
-      <div class="joinLogo">SNS CONNECT</div>
+    <div class="joinCard">
+      <div class="joinBrand">
+        <div class="joinBrandIcon">S</div>
+        <div>
+          <div class="joinLogo">SNS CONNECT</div>
+          <div class="joinSubBrand">Meet anytime, anywhere</div>
+        </div>
+      </div>
 
-      <h2 class="joinHeading">Join a Meeting</h2>
-      <p class="joinSub">Enter your name and Room ID</p>
+      <h2 class="joinHeading">Join a meeting</h2>
+      <p class="joinSub">Enter your display name and room ID to continue</p>
 
       <div class="joinForm">
-        <input id="nameInput" placeholder="Username (e.g., Sahithyan)" />
-        <input id="roomInput" placeholder="Room ID (e.g., music-room)" />
+        <input id="nameInput" placeholder="Your name" />
+        <input id="roomInput" placeholder="Room ID" />
         <button id="joinBtn" class="primaryBtn">
           <i class="fa-solid fa-right-to-bracket"></i>
-          <span>CONNECT</span>
+          <span>Join now</span>
         </button>
       </div>
     </div>
@@ -50,14 +62,50 @@
   <!-- Meeting Screen -->
   <div id="meetingScreen" class="meetingScreen hidden">
     <div class="topBar">
-      <div class="left">
-        <span class="pill"><i class="fa-solid fa-circle"></i> Live</span>
-        <span id="roomPill" class="pill outline"></span>
+      <div class="topBarLeft">
+        <div class="menuWrap">
+          <button id="menuBtn" class="topIconBtn" title="Menu">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+
+          <div id="menuDropdown" class="menuDropdown hidden">
+            <button id="startRecordBtn" class="menuItem" type="button">
+              <i class="fa-solid fa-circle-dot"></i>
+              <span>Start Recording</span>
+            </button>
+
+            <button id="stopRecordBtn" class="menuItem hidden" type="button">
+              <i class="fa-solid fa-stop"></i>
+              <span>Stop Recording</span>
+            </button>
+
+            <button id="screenshotBtn" class="menuItem" type="button">
+              <i class="fa-solid fa-camera"></i>
+              <span>Take Screenshot</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="meetingInfo">
+          <div class="meetingTitle">Meeting with Colleagues</div>
+          <div class="meetingMeta">
+            <span id="roomPill" class="metaItem"></span>
+            <span class="metaDot">|</span>
+            <span id="callTimer" class="timer">00:00</span>
+            <span class="metaDot">|</span>
+            <span id="statusText" class="status">Connecting…</span>
+            <span id="recBadge" class="recBadge hidden">
+              <span class="recDot"></span>
+              REC
+            </span>
+          </div>
+        </div>
       </div>
 
-      <div class="right">
-        <span id="callTimer" class="timer">00:00</span>
-        <span id="statusText" class="status">Connecting…</span>
+      <div class="topBarRight">
+        <div class="miniSelfPreview">
+          <video id="miniLocalVideo" autoplay muted playsinline></video>
+        </div>
       </div>
     </div>
 
@@ -70,9 +118,8 @@
           <div class="overlayText">Waiting for participant…</div>
         </div>
 
-        <!-- ALL videos go into same equal grid -->
         <div id="videoGrid" class="videoGrid">
-          <div id="localTile" class="videoTile">
+          <div id="localTile" class="videoTile localTile">
             <video id="localVideo" autoplay muted playsinline></video>
             <div class="nameTag" id="localNameTag">You</div>
           </div>
@@ -83,7 +130,7 @@
     <div id="chatPanel" class="chatPanel hidden">
       <div class="chatHeader">
         <div class="chatTitle">Chat</div>
-        <button id="chatCloseBtn" class="iconBtn ghost" title="Close chat">
+        <button id="chatCloseBtn" class="iconBtn ghost" title="Close chat" type="button">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -92,36 +139,31 @@
 
       <div class="chatRow">
         <input id="chatInput" placeholder="Type a message…" />
-        <button id="sendBtn" class="iconBtn primary" title="Send">
+        <button id="sendBtn" class="iconBtn primary" title="Send" type="button">
           <i class="fa-solid fa-paper-plane"></i>
         </button>
       </div>
     </div>
 
     <div class="controlBar">
-      <button id="muteBtn" class="ctl" title="Mute/Unmute">
+      <button id="muteBtn" class="ctl whiteCtl" title="Mute/Unmute" type="button">
         <div class="ctlIcon"><i class="fa-solid fa-microphone"></i></div>
-        <div class="ctlLabel">Mute</div>
       </button>
 
-      <button id="camBtn" class="ctl" title="Start/Stop Video">
+      <button id="camBtn" class="ctl whiteCtl" title="Start/Stop Video" type="button">
         <div class="ctlIcon"><i class="fa-solid fa-video"></i></div>
-        <div class="ctlLabel">Stop Video</div>
       </button>
 
-      <button id="switchCamBtn" class="ctl" title="Switch Camera">
+      <button id="switchCamBtn" class="ctl whiteCtl" title="Switch Camera" type="button">
         <div class="ctlIcon"><i class="fa-solid fa-rotate"></i></div>
-        <div class="ctlLabel">Switch Cam</div>
       </button>
 
-      <button id="chatBtn" class="ctl" title="Chat">
+      <button id="chatBtn" class="ctl whiteCtl" title="Chat" type="button">
         <div class="ctlIcon"><i class="fa-regular fa-message"></i></div>
-        <div class="ctlLabel">Chat</div>
       </button>
 
-      <button id="leaveBtn" class="ctl danger" title="Leave">
+      <button id="leaveBtn" class="ctl dangerCtl" title="Leave" type="button">
         <div class="ctlIcon"><i class="fa-solid fa-phone-slash"></i></div>
-        <div class="ctlLabel">Leave</div>
       </button>
     </div>
   </div>
