@@ -49,9 +49,9 @@
       <p class="joinSub">Enter your display name and room ID to continue</p>
 
       <div class="joinForm">
-        <input id="nameInput" placeholder="Your name" />
-        <input id="roomInput" placeholder="Room ID" />
-        <button id="joinBtn" class="primaryBtn">
+        <input id="nameInput" type="text" placeholder="Your name" autocomplete="off" />
+        <input id="roomInput" type="text" placeholder="Room ID" autocomplete="off" />
+        <button id="joinBtn" class="primaryBtn" type="button">
           <i class="fa-solid fa-right-to-bracket"></i>
           <span>Join now</span>
         </button>
@@ -64,7 +64,7 @@
     <div class="topBar">
       <div class="topBarLeft">
         <div class="menuWrap">
-          <button id="menuBtn" class="topIconBtn" title="Menu">
+          <button id="menuBtn" class="topIconBtn" title="Menu" type="button" aria-label="Open menu">
             <i class="fa-solid fa-bars"></i>
           </button>
 
@@ -134,7 +134,7 @@
     <div id="chatPanel" class="chatPanel hidden">
       <div class="chatHeader">
         <div class="chatTitle">Chat</div>
-        <button id="chatCloseBtn" class="iconBtn ghost" title="Close chat" type="button">
+        <button id="chatCloseBtn" class="iconBtn ghost" title="Close chat" type="button" aria-label="Close chat">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -142,31 +142,31 @@
       <div id="chatBox" class="chatBox"></div>
 
       <div class="chatRow">
-        <input id="chatInput" placeholder="Type a message…" />
-        <button id="sendBtn" class="iconBtn primary" title="Send" type="button">
+        <input id="chatInput" type="text" placeholder="Type a message…" autocomplete="off" />
+        <button id="sendBtn" class="iconBtn primary" title="Send" type="button" aria-label="Send message">
           <i class="fa-solid fa-paper-plane"></i>
         </button>
       </div>
     </div>
 
     <div class="controlBar">
-      <button id="muteBtn" class="ctl whiteCtl" title="Mute/Unmute" type="button">
+      <button id="muteBtn" class="ctl whiteCtl" title="Mute/Unmute" type="button" aria-label="Mute or unmute microphone">
         <div class="ctlIcon"><i class="fa-solid fa-microphone"></i></div>
       </button>
 
-      <button id="camBtn" class="ctl whiteCtl" title="Start/Stop Video" type="button">
+      <button id="camBtn" class="ctl whiteCtl" title="Start/Stop Video" type="button" aria-label="Turn camera on or off">
         <div class="ctlIcon"><i class="fa-solid fa-video"></i></div>
       </button>
 
-      <button id="switchCamBtn" class="ctl whiteCtl" title="Switch Camera" type="button">
+      <button id="switchCamBtn" class="ctl whiteCtl" title="Switch Camera" type="button" aria-label="Switch camera">
         <div class="ctlIcon"><i class="fa-solid fa-rotate"></i></div>
       </button>
 
-      <button id="chatBtn" class="ctl whiteCtl" title="Chat" type="button">
+      <button id="chatBtn" class="ctl whiteCtl" title="Chat" type="button" aria-label="Open chat">
         <div class="ctlIcon"><i class="fa-regular fa-message"></i></div>
       </button>
 
-      <button id="leaveBtn" class="ctl dangerCtl" title="Leave" type="button">
+      <button id="leaveBtn" class="ctl dangerCtl" title="Leave" type="button" aria-label="Leave meeting">
         <div class="ctlIcon"><i class="fa-solid fa-phone-slash"></i></div>
       </button>
     </div>
