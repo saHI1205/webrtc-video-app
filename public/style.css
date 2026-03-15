@@ -37,6 +37,11 @@ body{
   overflow:hidden;
 }
 
+button,
+input{
+  font-family:inherit;
+}
+
 .hidden{
   display:none !important;
 }
@@ -885,6 +890,11 @@ body{
   z-index:100;
   box-shadow:var(--shadow);
   font-size:14px;
+  pointer-events:none;
+  max-width:min(92vw, 520px);
+  text-align:center;
+  white-space:normal;
+  word-break:break-word;
 }
 
 /* Responsive */
