@@ -261,7 +261,7 @@ function createThumbTile(id, participant) {
 function renderParticipants() {
   ensureMainParticipant();
 
-  thumbStrip.innerHTML = "";
+  if (thumbStrip) thumbStrip.innerHTML = "";
 
   if (!mainParticipantId || !participants[mainParticipantId]) {
     if (mainVideo) mainVideo.srcObject = null;
@@ -271,19 +271,21 @@ function renderParticipants() {
 
   const mainParticipant = participants[mainParticipantId];
 
-  if (mainVideo.srcObject !== mainParticipant.stream) {
+  if (mainVideo && mainVideo.srcObject !== mainParticipant.stream) {
     mainVideo.srcObject = mainParticipant.stream;
   }
 
-  mainVideo.muted = !!mainParticipant.isLocal;
-  mainNameTag.textContent = mainParticipant.name || "Participant";
+  if (mainVideo) mainVideo.muted = !!mainParticipant.isLocal;
+  if (mainNameTag) mainNameTag.textContent = mainParticipant.name || "Participant";
 
-  mainVideo.play().catch((e) => {
-    console.log("Main video play warning:", e);
-  });
+  if (mainVideo) {
+    mainVideo.play().catch((e) => {
+      console.log("Main video play warning:", e);
+    });
+  }
 
   Object.keys(participants).forEach((id) => {
-    if (id === mainParticipantId) return;
+    if (id === mainParticipantId || !thumbStrip) return;
     const tile = createThumbTile(id, participants[id]);
     thumbStrip.appendChild(tile);
   });
@@ -530,7 +532,7 @@ function createMixedAudioTrack(streams) {
   if (!AudioCtx) return null;
 
   const audioContext = new AudioCtx();
-  const destination = audioContext.crKe9UDk2eYoMm9CAJhsv2CBGW7CUFSPNhu();
+  const destination = audioContext.createMediaStreamDestination();
   let hasAudio = false;
 
   streams.forEach((stream) => {
@@ -589,6 +591,10 @@ async function startRecording() {
 
       if (recordingStream) {
         recordingStream.getTracks().forEach((track) => track.stop());
+      }
+
+      if (displayStream) {
+        displayStream.getTracks().forEach((track) => track.stop());
       }
 
       recordingStream = null;
@@ -760,8 +766,8 @@ joinBtn.addEventListener("click", async () => {
   joinScreen.classList.add("hidden");
   meetingScreen.classList.remove("hidden");
 
-  roomPill.textContent = roomId;
-  mainNameTag.textContent = myName;
+  if (roomPill) roomPill.textContent = roomId;
+  if (mainNameTag) mainNameTag.textContent = myName;
 
   setStatus("Connecting…");
   showToast("Joining meeting…");
@@ -871,6 +877,11 @@ socket.on("user-left", ({ socketId }) => {
   removeParticipant(socketId);
 });
 
+socket.on("user-mic-status", ({ name, muted }) => {
+  const personName = name || "Participant";
+  showToast(`${personName} ${muted ? "muted" : "unmuted"} microphone`);
+});
+
 // Chat
 chatBtn.addEventListener("click", () => {
   if (chatPanel.classList.contains("hidden")) openChat();
@@ -912,12 +923,21 @@ muteBtn.addEventListener("click", () => {
   if (!a) return;
 
   a.enabled = !a.enabled;
+  const isMuted = !a.enabled;
 
   muteBtn.querySelector(".ctlIcon").innerHTML = a.enabled
     ? '<i class="fa-solid fa-microphone"></i>'
     : '<i class="fa-solid fa-microphone-slash"></i>';
 
-  showToast(a.enabled ? "Unmuted" : "Muted");
+  showToast(isMuted ? "Muted" : "Unmuted");
+
+  if (roomId) {
+    socket.emit("mic-status-change", {
+      roomId,
+      name: myName,
+      muted: isMuted
+    });
+  }
 });
 
 // Camera
