@@ -19,7 +19,6 @@ io.on("connection", (socket) => {
 
   socket.on("join-room", async ({ roomId, name }) => {
     try {
-      // Leave previous room first if any
       if (socket.data.roomId) {
         socket.leave(socket.data.roomId);
       }
@@ -75,6 +74,13 @@ io.on("connection", (socket) => {
 
   socket.on("chat-message", ({ roomId, name, message }) => {
     io.to(roomId).emit("chat-message", { name, message });
+  });
+
+  socket.on("mic-status-change", ({ roomId, name, muted }) => {
+    socket.to(roomId).emit("user-mic-status", {
+      name: name || socket.data.name || "User",
+      muted
+    });
   });
 
   socket.on("leave-room", () => {
